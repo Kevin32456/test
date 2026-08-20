@@ -183,7 +183,7 @@ export class GameRoom {
         break;
       }
       case "blink": {
-        if (player.hasBall || player.blinkCooldownMs > 0) return;
+        if (player.blinkCooldownMs > 0) return;
         const dx = action.x - player.x;
         const dy = action.y - player.y;
         const len = Math.hypot(dx, dy);
@@ -537,10 +537,9 @@ export class GameRoom {
     const dist = Math.hypot(dx, dy);
     const catchup = clamp((dist - 50) / 160, 0, 1);
     const speedBonus = 1 + catchup * GAME.DOG_CATCHUP_SPEED_BONUS;
-    const targetSpeed = clamp(
-      (GAME.DOG_BASE_SPEED + pressure * GAME.DOG_ACCEL_PER_SEC) * speedBonus,
+    const targetSpeed = Math.max(
       GAME.DOG_BASE_SPEED,
-      GAME.DOG_MAX_SPEED * speedBonus,
+      (GAME.DOG_BASE_SPEED + pressure * GAME.DOG_ACCEL_PER_SEC) * speedBonus,
     );
 
     /** 0 = 近距離繞圈（甩尾），1 = 落後追回（黏球） */
@@ -755,8 +754,9 @@ export class GameRoom {
   private spawnPoint(index: number) {
     const c = arenaCenter();
     const r = GAME.ARENA_RADIUS * 0.62;
-    const angles = [-Math.PI * 0.75, -Math.PI * 0.25, Math.PI * 0.75, Math.PI * 0.25];
-    const a = angles[index % angles.length]!;
+    const a =
+      -Math.PI / 2 +
+      ((index % GAME.MAX_PLAYERS) * Math.PI * 2) / GAME.MAX_PLAYERS;
     return {
       x: c.x + Math.cos(a) * r,
       y: c.y + Math.sin(a) * r,

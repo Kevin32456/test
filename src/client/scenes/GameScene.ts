@@ -25,8 +25,6 @@ interface DisplayPoint {
   ty: number;
 }
 
-const DOG_MAX_PRESSURE_SEC =
-  (GAME.DOG_MAX_SPEED - GAME.DOG_BASE_SPEED) / GAME.DOG_ACCEL_PER_SEC;
 
 export class GameScene extends Phaser.Scene {
   private playerSprites = new Map<string, Phaser.GameObjects.Container>();
@@ -141,7 +139,7 @@ export class GameScene extends Phaser.Scene {
       const snapshot = getLatestSnapshot();
       if (!snapshot || snapshot.deathPauseMs > 0) return;
       const me = this.getMe();
-      if (!me || !me.alive || me.hasBall) return;
+      if (!me || !me.alive) return;
       const pointer = this.input.activePointer;
       sendAction({ type: "blink", x: pointer.worldX, y: pointer.worldY });
     });
@@ -266,7 +264,7 @@ export class GameScene extends Phaser.Scene {
     g.clear();
     if (snapshot.phase !== "playing") return;
 
-    const ratio = clamp01(snapshot.dogPressureSec / DOG_MAX_PRESSURE_SEC);
+    const ratio = clamp01(snapshot.dogPressureSec / GAME.DOG_PRESSURE_BAR_SEC);
     const x = 12;
     const y = 108;
     const w = 160;
@@ -572,7 +570,7 @@ export class GameScene extends Phaser.Scene {
     const aliveCount = snapshot.players.filter((p) => p.alive).length;
     const cd = me ? Math.ceil(me.blinkCooldownMs / 1000) : 0;
     const pressurePct = Math.round(
-      clamp01(snapshot.dogPressureSec / DOG_MAX_PRESSURE_SEC) * 100,
+      (snapshot.dogPressureSec / GAME.DOG_PRESSURE_BAR_SEC) * 100,
     );
 
     let ballHint = "";
@@ -581,7 +579,7 @@ export class GameScene extends Phaser.Scene {
     } else if (snapshot.ball.inFlight) {
       ballHint = "球飛行中 — 狗仍追球";
     } else if (me?.hasBall) {
-      ballHint = "你持球：右鍵點人傳球";
+      ballHint = `你持球：右鍵點人傳球 · Blink CD ${cd}s`;
     } else if (me?.alive) {
       ballHint = `Blink <Space> · CD ${cd}s`;
     } else {
@@ -590,7 +588,9 @@ export class GameScene extends Phaser.Scene {
 
     let controlHint = "";
     if (this.controlMode === "wasd") {
-      controlHint = me?.hasBall ? "WASD 移動 · 右鍵傳球" : "WASD 移動 · Space Blink";
+      controlHint = me?.hasBall
+        ? "WASD 移動 · 右鍵傳球 · Space Blink"
+        : "WASD 移動 · Space Blink";
     } else {
       controlHint = "右鍵移動／傳球";
     }

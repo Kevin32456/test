@@ -123,7 +123,6 @@ function renderCharacterGrid(snapshot: GameSnapshot | null) {
   const taken = getTakenMap(snapshot);
   characterGrid.querySelectorAll<HTMLButtonElement>(".char-card").forEach((btn) => {
     const id = btn.dataset.id!;
-    const char = CHARACTERS.find((c) => c.id === id)!;
     const owner = taken.get(id);
     const isMine = snapshot?.players.find((p) => p.id === playerId)?.characterId === id;
     const takenByOther = owner && !isMine;
@@ -139,7 +138,7 @@ function renderCharacterGrid(snapshot: GameSnapshot | null) {
     } else if (isMine) {
       status.textContent = "你的角色";
     } else {
-      status.textContent = char.name;
+      status.textContent = "可選";
     }
   });
 }

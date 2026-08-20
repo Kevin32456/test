@@ -1,5 +1,5 @@
 export const GAME = {
-  MAX_PLAYERS: 4,
+  MAX_PLAYERS: 8,
   MIN_PLAYERS_TO_START: 2,
   ARENA_WIDTH: 900,
   ARENA_HEIGHT: 900,
@@ -16,7 +16,8 @@ export const GAME = {
   DOG_HIT_RADIUS: 16,
   DOG_BASE_SPEED: 135,
   DOG_ACCEL_PER_SEC: 46,
-  DOG_MAX_SPEED: 600,
+  /** HUD 壓力條滿格對應秒數（實際狗速與壓力無上限） */
+  DOG_PRESSURE_BAR_SEC: 10,
   /** 狗追擊點：近距離時的前方偏移（繞圈卡位用） */
   DOG_CHASE_FRONT_OFFSET: 12,
   /** 超過此距離改追玩家本體，不再用前方偏移 */

@@ -31,6 +31,30 @@ export const CHARACTERS: CharacterDef[] = [
     asset: "/assets/characters/char-coat.png",
     color: "#81c784",
   },
+  {
+    id: "ninja",
+    name: "忍者",
+    asset: "/assets/characters/char-ninja.png",
+    color: "#9575cd",
+  },
+  {
+    id: "miko",
+    name: "巫女",
+    asset: "/assets/characters/char-miko.png",
+    color: "#ef5350",
+  },
+  {
+    id: "mechanic",
+    name: "機工師",
+    asset: "/assets/characters/char-mechanic.png",
+    color: "#26a69a",
+  },
+  {
+    id: "captain",
+    name: "船長",
+    asset: "/assets/characters/char-captain.png",
+    color: "#5c6bc0",
+  },
 ] as const;
 
 export type CharacterId = (typeof CHARACTERS)[number]["id"];
