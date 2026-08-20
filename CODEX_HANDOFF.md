@@ -2,19 +2,18 @@
 
 ## 階段
 
-**v0.3.0 — 選角 + 狗壓平衡（main）**
+**v0.4.0 — 像素 UI + 可部署（main）**
 
 ## 玩家幻想
 
 球燙手，甩尾狗越追越快；在狗漂移繞圈過來之前，把球丟給隊友。
 
-## v0.3 摘要
+## v0.4 摘要
 
 | 面向 | 改動 |
 |------|------|
-| 選角 | 大廳 4 角色、不可重複、伺服器驗證 |
-| 平衡 | 狗基礎/加速/上限上調，正面截擊更黏、冰面抓地更強 |
-| 素材 | 移除 AI 生成角色圖；`public/assets/characters/` 待換原始 PNG |
+| UI | Fusion Pixel 12px 繁體、大廳直角像素風 |
+| 部署 | `render.yaml`、Dockerfile、`/health`、單埠 production |
 
 ## 核心規則
 
@@ -28,23 +27,23 @@
 
 ## Git
 
-- `main` = v0.3.0
+- `main` = v0.4.0
 - 新功能：`cursor/<描述>-a9d0`
 
 ## 執行
 
 ```bash
-npm install && npm run dev
+npm install && npm run dev          # 開發
+npm run build && npm start          # 正式（需 NODE_ENV=production）
 ```
 
 ## 下一個最安全任務
 
-1. **v0.4 UI 優化** — 大廳/局內 HUD、選角卡片、威脅條與操作提示視覺打磨
-2. 補上使用者原始四張角色 sprite（`char-hat/gauntlet/spike/coat.png`）
-3. 4 人 playtest 驗證現有狗壓曲線
+1. 4 人線上 playtest（部署 URL）
+2. 補原始角色 sprite
+3. 局內 HUD / 威脅條像素化打磨
 
 ## 風險
 
-- 狗速偏難（v0.3 已多輪上調，需 playtest）
-- 角色圖仍為占位色塊（缺原始素材）
-- Phaser bundle 偏大（~1.5MB），尚未 code-split
+- Render 免費版休眠；WebSocket 需 Web Service 非 Static Site
+- 角色圖仍為占位色塊

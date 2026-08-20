@@ -23,6 +23,10 @@ const room = new GameRoom(() => {
   io.emit("state", room.getSnapshot());
 });
 
+app.get("/health", (_req, res) => {
+  res.status(200).json({ ok: true, phase: room.getSnapshot().phase });
+});
+
 if (isProd) {
   const distPath = path.join(__dirname, "../dist");
   app.use(express.static(distPath));
@@ -60,7 +64,9 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`[shuai-gou] server on http://127.0.0.1:${PORT}`);
+const HOST = process.env.HOST ?? "0.0.0.0";
+
+httpServer.listen(PORT, HOST, () => {
+  console.log(`[shuai-gou] server on http://${HOST}:${PORT}`);
   console.log(`[shuai-gou] max players: ${GAME.MAX_PLAYERS}`);
 });
