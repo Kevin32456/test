@@ -3,7 +3,11 @@ import { Sfx } from "../audio/Sfx";
 import { expLerp, expLerpAngle } from "../interpolation";
 import { CHARACTERS, getCharacter } from "@shared/characters";
 import { GAME, arenaCenter } from "@shared/constants";
-import { getControlMode, type ControlMode } from "@shared/controls";
+import {
+  getControlMode,
+  subscribeControlMode,
+  type ControlMode,
+} from "@shared/controls";
 import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
 import type { GameSnapshot, PlayerState } from "@shared/types";
 import {
@@ -44,8 +48,11 @@ export class GameScene extends Phaser.Scene {
   private hud!: Phaser.GameObjects.Text;
   private threatBar!: Phaser.GameObjects.Graphics;
   private countdownBanner: Phaser.GameObjects.Text | null = null;
+  private deathPauseOverlay: Phaser.GameObjects.Rectangle | null = null;
+  private deathPauseBanner: Phaser.GameObjects.Text | null = null;
   private endedBanner: Phaser.GameObjects.Text | null = null;
   private unsubState: (() => void) | null = null;
+  private unsubControlMode: (() => void) | null = null;
   private prevSnapshot: GameSnapshot | null = null;
   private lastMatchSeq = 0;
   private lastCountdownBeep = -1;
@@ -131,10 +138,16 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-SPACE", (event: KeyboardEvent) => {
       event.preventDefault();
       Sfx.unlock();
+      const snapshot = getLatestSnapshot();
+      if (!snapshot || snapshot.deathPauseMs > 0) return;
       const me = this.getMe();
       if (!me || !me.alive || me.hasBall) return;
       const pointer = this.input.activePointer;
       sendAction({ type: "blink", x: pointer.worldX, y: pointer.worldY });
+    });
+
+    this.unsubControlMode = subscribeControlMode((mode) => {
+      this.applyControlMode(mode);
     });
 
     this.unsubState = subscribeState((snapshot) => {
@@ -148,7 +161,20 @@ export class GameScene extends Phaser.Scene {
   shutdown() {
     this.unsubState?.();
     this.unsubState = null;
+    this.unsubControlMode?.();
+    this.unsubControlMode = null;
     this.prevSnapshot = null;
+  }
+
+  private applyControlMode(mode: ControlMode) {
+    if (mode === this.controlMode) return;
+    this.controlMode = mode;
+    // 切換模式後重送輸入：離開 WASD 要停下，回到 WASD 要重新同步按鍵。
+    this.sentInputX = Number.NaN;
+    this.sentInputY = Number.NaN;
+    if (mode === "mouse") {
+      sendAction({ type: "moveInput", x: 0, y: 0 });
+    }
   }
 
   update(time: number, delta: number) {
@@ -210,6 +236,12 @@ export class GameScene extends Phaser.Scene {
 
   private sendWasdInput(time: number, snapshot: GameSnapshot) {
     if (this.controlMode !== "wasd" || snapshot.phase !== "playing") return;
+    if (snapshot.deathPauseMs > 0) {
+      // 停頓結束後強制重送當下按鍵狀態。
+      this.sentInputX = Number.NaN;
+      this.sentInputY = Number.NaN;
+      return;
+    }
     const me = this.getMe();
     if (!me?.alive) return;
 
@@ -286,7 +318,13 @@ export class GameScene extends Phaser.Scene {
 
   private handleRightClick(wx: number, wy: number) {
     const snapshot = getLatestSnapshot();
-    if (!snapshot || snapshot.phase !== "playing") return;
+    if (
+      !snapshot ||
+      snapshot.phase !== "playing" ||
+      snapshot.deathPauseMs > 0
+    ) {
+      return;
+    }
 
     const me = this.getMe();
     if (!me || !me.alive) return;
@@ -416,6 +454,48 @@ export class GameScene extends Phaser.Scene {
       this.countdownBanner.setVisible(false);
     }
 
+    if (snapshot.deathPauseMs > 0) {
+      if (!this.deathPauseOverlay) {
+        this.deathPauseOverlay = this.add
+          .rectangle(
+            GAME.ARENA_WIDTH / 2,
+            GAME.ARENA_HEIGHT / 2,
+            GAME.ARENA_WIDTH,
+            GAME.ARENA_HEIGHT,
+            0x000000,
+            0.42,
+          )
+          .setDepth(180);
+      }
+      if (!this.deathPauseBanner) {
+        this.deathPauseBanner = this.add
+          .text(
+            GAME.ARENA_WIDTH / 2,
+            GAME.ARENA_HEIGHT / 2,
+            "",
+            pixelTextStyle(PIXEL_FONT_SIZES.md, {
+              color: "#ffffff",
+              backgroundColor: "rgba(16,18,24,0.9)",
+              padding: { x: 28, y: 20 },
+              align: "center",
+            }),
+          )
+          .setOrigin(0.5)
+          .setDepth(181);
+      }
+
+      const sec = Math.max(1, Math.ceil(snapshot.deathPauseMs / 1000));
+      this.deathPauseOverlay.setVisible(true);
+      this.deathPauseBanner
+        .setText(
+          `${snapshot.eliminatedPlayerName ?? "玩家"} 出局！\n${sec} 秒後重新傳球`,
+        )
+        .setVisible(true);
+    } else {
+      this.deathPauseOverlay?.setVisible(false);
+      this.deathPauseBanner?.setVisible(false);
+    }
+
     for (const p of snapshot.players) {
       let dp = this.displayPlayers.get(p.id);
       if (!dp) {
@@ -481,7 +561,9 @@ export class GameScene extends Phaser.Scene {
 
     const showBall =
       snapshot.phase === "playing" &&
-      (snapshot.ball.inFlight || snapshot.ballHolderId !== null);
+      (snapshot.ball.inFlight ||
+        snapshot.ballHolderId !== null ||
+        snapshot.deathPauseMs > 0);
 
     this.ballSprite.setVisible(showBall);
     this.ballGlow.setVisible(showBall);
@@ -494,7 +576,9 @@ export class GameScene extends Phaser.Scene {
     );
 
     let ballHint = "";
-    if (snapshot.ball.inFlight) {
+    if (snapshot.deathPauseMs > 0) {
+      ballHint = "死亡停頓 — 全場暫停";
+    } else if (snapshot.ball.inFlight) {
       ballHint = "球飛行中 — 狗仍追球";
     } else if (me?.hasBall) {
       ballHint = "你持球：右鍵點人傳球";

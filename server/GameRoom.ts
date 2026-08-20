@@ -43,6 +43,8 @@ export class GameRoom {
   private holdTimeSec = 0;
   private flightPressureSec = 0;
   private countdownSec: number | null = null;
+  private deathPauseMs = 0;
+  private eliminatedPlayerName: string | null = null;
   private winnerId: string | null = null;
   private winnerName: string | null = null;
   private ball: BallState = this.idleBall();
@@ -111,7 +113,7 @@ export class GameRoom {
     if (this.players.size === 0) {
       this.stopTick();
       this.resetLobby();
-    } else if (this.phase === "playing") {
+    } else if (this.phase === "playing" && this.deathPauseMs <= 0) {
       this.checkWin();
     }
   }
@@ -141,7 +143,13 @@ export class GameRoom {
       return;
     }
 
-    if (this.phase !== "playing" || !player.alive) return;
+    if (
+      this.phase !== "playing" ||
+      !player.alive ||
+      this.deathPauseMs > 0
+    ) {
+      return;
+    }
 
     switch (action.type) {
       case "move":
@@ -210,6 +218,8 @@ export class GameRoom {
       holdTimeSec: this.holdTimeSec,
       dogPressureSec: this.getDogPressureSec(),
       countdownSec: this.countdownSec,
+      deathPauseMs: this.deathPauseMs,
+      eliminatedPlayerName: this.eliminatedPlayerName,
       winnerId: this.winnerId,
       winnerName: this.winnerName,
       roomCount: this.players.size,
@@ -232,6 +242,8 @@ export class GameRoom {
     this.holdTimeSec = 0;
     this.flightPressureSec = 0;
     this.countdownSec = null;
+    this.deathPauseMs = 0;
+    this.eliminatedPlayerName = null;
     this.winnerId = null;
     this.winnerName = null;
     this.ball = this.idleBall();
@@ -267,6 +279,8 @@ export class GameRoom {
     this.matchSeq += 1;
     this.phase = "playing";
     this.countdownSec = null;
+    this.deathPauseMs = 0;
+    this.eliminatedPlayerName = null;
     this.winnerId = null;
     this.winnerName = null;
 
@@ -323,7 +337,7 @@ export class GameRoom {
     }
     target.hasBall = true;
     this.ballHolderId = target.id;
-    /** 傳球落地：保留 80% 狗壓 */
+    /** 傳球落地：依 DOG_PRESSURE_PASS_RETAIN 保留狗壓 */
     this.holdTimeSec = this.flightPressureSec * GAME.DOG_PRESSURE_PASS_RETAIN;
     this.flightPressureSec = 0;
     this.ball.inFlight = false;
@@ -389,6 +403,15 @@ export class GameRoom {
       return;
     }
 
+    if (this.deathPauseMs > 0) {
+      this.deathPauseMs = Math.max(0, this.deathPauseMs - dt * 1000);
+      if (this.deathPauseMs <= 0) {
+        this.finishDeathPause();
+      }
+      this.onBroadcast();
+      return;
+    }
+
     for (const p of this.players.values()) {
       if (!p.alive) continue;
       if (p.blinkCooldownMs > 0) {
@@ -412,7 +435,9 @@ export class GameRoom {
       }
     }
 
-    this.checkWin();
+    if (this.deathPauseMs <= 0) {
+      this.checkWin();
+    }
     this.onBroadcast();
   }
 
@@ -455,31 +480,49 @@ export class GameRoom {
   }
 
   private getHolderChasePoint(holder: InternalPlayer): { x: number; y: number } {
-    const moveDx = holder.targetX - holder.x;
-    const moveDy = holder.targetY - holder.y;
-    const moveLen = Math.hypot(moveDx, moveDy);
-
     let dirX: number;
     let dirY: number;
 
-    if (moveLen > 6) {
-      dirX = moveDx / moveLen;
-      dirY = moveDy / moveLen;
+    const inputLen = Math.hypot(holder.inputX, holder.inputY);
+    if (inputLen > 0.01) {
+      dirX = holder.inputX / inputLen;
+      dirY = holder.inputY / inputLen;
     } else {
-      const towardHolderDx = holder.x - this.dog.x;
-      const towardHolderDy = holder.y - this.dog.y;
-      const towardHolderLen = Math.hypot(towardHolderDx, towardHolderDy);
-      if (towardHolderLen > 1) {
-        dirX = towardHolderDx / towardHolderLen;
-        dirY = towardHolderDy / towardHolderLen;
+      const moveDx = holder.targetX - holder.x;
+      const moveDy = holder.targetY - holder.y;
+      const moveLen = Math.hypot(moveDx, moveDy);
+
+      if (moveLen > 6) {
+        dirX = moveDx / moveLen;
+        dirY = moveDy / moveLen;
       } else {
-        return { x: holder.x, y: holder.y };
+        const towardHolderDx = holder.x - this.dog.x;
+        const towardHolderDy = holder.y - this.dog.y;
+        const towardHolderLen = Math.hypot(towardHolderDx, towardHolderDy);
+        if (towardHolderLen > 1) {
+          dirX = towardHolderDx / towardHolderLen;
+          dirY = towardHolderDy / towardHolderLen;
+        } else {
+          return { x: holder.x, y: holder.y };
+        }
       }
     }
 
+    const distToHolder = distance(this.dog.x, this.dog.y, holder.x, holder.y);
+    if (distToHolder >= GAME.DOG_CHASE_RECOVERY_DIST) {
+      return { x: holder.x, y: holder.y };
+    }
+
+    const closeFactor = clamp(
+      1 - distToHolder / GAME.DOG_CHASE_RECOVERY_DIST,
+      0,
+      1,
+    );
+    const offset = GAME.DOG_CHASE_FRONT_OFFSET * closeFactor * closeFactor;
+
     return {
-      x: holder.x + dirX * GAME.DOG_CHASE_FRONT_OFFSET,
-      y: holder.y + dirY * GAME.DOG_CHASE_FRONT_OFFSET,
+      x: holder.x + dirX * offset,
+      y: holder.y + dirY * offset,
     };
   }
 
@@ -489,15 +532,29 @@ export class GameRoom {
 
   private updateDogToward(dt: number, chaseX: number, chaseY: number) {
     const pressure = this.getDogPressureSec();
-    const targetSpeed = clamp(
-      GAME.DOG_BASE_SPEED + pressure * GAME.DOG_ACCEL_PER_SEC,
-      GAME.DOG_BASE_SPEED,
-      GAME.DOG_MAX_SPEED,
-    );
-
     const dx = chaseX - this.dog.x;
     const dy = chaseY - this.dog.y;
     const dist = Math.hypot(dx, dy);
+    const catchup = clamp((dist - 50) / 160, 0, 1);
+    const speedBonus = 1 + catchup * GAME.DOG_CATCHUP_SPEED_BONUS;
+    const targetSpeed = clamp(
+      (GAME.DOG_BASE_SPEED + pressure * GAME.DOG_ACCEL_PER_SEC) * speedBonus,
+      GAME.DOG_BASE_SPEED,
+      GAME.DOG_MAX_SPEED * speedBonus,
+    );
+
+    /** 0 = 近距離繞圈（甩尾），1 = 落後追回（黏球） */
+    const recovery = clamp(
+      (dist - GAME.DOG_ORBIT_RANGE) / (GAME.DOG_CHASE_RECOVERY_DIST - GAME.DOG_ORBIT_RANGE),
+      0,
+      1,
+    );
+    const turnRate =
+      GAME.DOG_ORBIT_TURN_RATE +
+      (GAME.DOG_TURN_RATE - GAME.DOG_ORBIT_TURN_RATE) * recovery;
+    const forwardGrip =
+      GAME.DOG_ORBIT_FORWARD_GRIP +
+      (GAME.DOG_FORWARD_GRIP - GAME.DOG_ORBIT_FORWARD_GRIP) * recovery;
 
     let vx = this.dog.vx;
     let vy = this.dog.vy;
@@ -505,50 +562,75 @@ export class GameRoom {
     if (dist >= 1) {
       const desiredAngle = Math.atan2(dy, dx);
       const speed = Math.hypot(vx, vy);
+      const velocityAngle =
+        speed > 20 ? Math.atan2(vy, vx) : this.dog.angle;
+      const velocityAngleDiff = normalizeAngle(
+        desiredAngle - velocityAngle,
+      );
+      const sharpTurn =
+        speed > 20 && Math.abs(velocityAngleDiff) > Math.PI / 2;
+
+      // 視覺朝向不再綁定速度：狗頭先回看球，身體仍可沿舊速度滑行。
+      const facingDiff = normalizeAngle(desiredAngle - this.dog.angle);
+      const facingRate = sharpTurn
+        ? GAME.DOG_SHARP_FACING_TURN_RATE
+        : GAME.DOG_FACING_TURN_RATE;
+      const facingTurn = clamp(
+        facingDiff,
+        -facingRate * dt,
+        facingRate * dt,
+      );
+      this.dog.angle = normalizeAngle(this.dog.angle + facingTurn);
 
       if (speed > 20) {
-        const currentAngle = Math.atan2(vy, vx);
-        const angleDiff = normalizeAngle(desiredAngle - currentAngle);
-        const sharpTurn = Math.abs(angleDiff) > Math.PI / 2;
-
-        const turnScale = sharpTurn ? GAME.DOG_SHARP_TURN_SCALE : 1;
-        const maxTurn = GAME.DOG_TURN_RATE * turnScale * dt;
-        const turn = clamp(angleDiff, -maxTurn, maxTurn);
-        const newAngle = currentAngle + turn;
-
-        const gripScale = sharpTurn ? GAME.DOG_SHARP_TURN_GRIP_SCALE : 1;
-        const newSpeed =
-          speed + (targetSpeed - speed) * GAME.DOG_FORWARD_GRIP * gripScale * dt;
-
-        const speedCap = targetSpeed * 1.15;
-        const clampedSpeed = clamp(newSpeed, 0, speedCap);
-
-        vx = Math.cos(newAngle) * clampedSpeed;
-        vy = Math.sin(newAngle) * clampedSpeed;
-
-        // 大角度轉向時保留橫向慣性（相對新追擊方向的側滑）
         const headingX = dx / dist;
         const headingY = dy / dist;
-        const rightX = -headingY;
-        const rightY = headingX;
-        const vForward = vx * headingX + vy * headingY;
-        const vLateral = vx * rightX + vy * rightY;
-        const lateralDamp = Math.exp(-GAME.DOG_LATERAL_FRICTION * dt);
-        vx = vForward * headingX + vLateral * lateralDamp * rightX;
-        vy = vForward * headingY + vLateral * lateralDamp * rightY;
+
+        if (sharpTurn) {
+          // 掠過目標後不直接旋轉速度；以反向牽引煞停，保留短暫後滑。
+          const reverseBlend = clamp(GAME.DOG_REVERSE_GRIP * dt, 0, 1);
+          vx += (headingX * targetSpeed - vx) * reverseBlend;
+          vy += (headingY * targetSpeed - vy) * reverseBlend;
+        } else {
+          const maxTurn = turnRate * dt;
+          const turn = clamp(velocityAngleDiff, -maxTurn, maxTurn);
+          const newAngle = velocityAngle + turn;
+          const newSpeed =
+            speed + (targetSpeed - speed) * forwardGrip * dt;
+          const speedCap = targetSpeed * (1.12 + recovery * 0.08);
+          const clampedSpeed = clamp(newSpeed, 0, speedCap);
+
+          vx = Math.cos(newAngle) * clampedSpeed;
+          vy = Math.sin(newAngle) * clampedSpeed;
+        }
+
+        // 追回時收斂側滑；近距離繞圈保留外甩。
+        if (!sharpTurn && recovery > 0.35) {
+          const headingX = dx / dist;
+          const headingY = dy / dist;
+          const rightX = -headingY;
+          const rightY = headingX;
+          const vForward = vx * headingX + vy * headingY;
+          const vLateral = vx * rightX + vy * rightY;
+          const friction =
+            GAME.DOG_LATERAL_FRICTION * (0.25 + recovery * 0.75);
+          const lateralDamp = Math.exp(-friction * dt);
+          vx = vForward * headingX + vLateral * lateralDamp * rightX;
+          vy = vForward * headingY + vLateral * lateralDamp * rightY;
+        }
       } else {
         const headingX = dx / dist;
         const headingY = dy / dist;
         const vForward = vx * headingX + vy * headingY;
         const forwardImpulse =
-          (targetSpeed - vForward) * GAME.DOG_FORWARD_GRIP * dt;
+          (targetSpeed - vForward) * forwardGrip * dt;
         vx += headingX * forwardImpulse;
         vy += headingY * forwardImpulse;
       }
     }
 
     let speed = Math.hypot(vx, vy);
-    const speedCap = targetSpeed * 1.15;
+    const speedCap = targetSpeed * (1.12 + recovery * 0.08);
     if (speed > speedCap) {
       const scale = speedCap / speed;
       vx *= scale;
@@ -571,13 +653,7 @@ export class GameRoom {
     this.dog.vy = wall.vy;
     this.dog.x = wall.x;
     this.dog.y = wall.y;
-    this.dog.speed = Math.hypot(vx, vy);
-
-    if (this.dog.speed > 10) {
-      this.dog.angle = Math.atan2(vy, vx);
-    } else if (dist >= 1) {
-      this.dog.angle = Math.atan2(dy, dx);
-    }
+    this.dog.speed = Math.hypot(wall.vx, wall.vy);
   }
 
   private checkDogKill() {
@@ -590,7 +666,7 @@ export class GameRoom {
 
     const hit =
       distance(this.dog.x, this.dog.y, holder.x, holder.y) <
-      GAME.DOG_RADIUS + GAME.PLAYER_RADIUS - 4;
+      GAME.DOG_HIT_RADIUS + GAME.PLAYER_HIT_RADIUS;
 
     if (!hit) return;
 
@@ -600,12 +676,36 @@ export class GameRoom {
     holder.hasBall = false;
     this.ballHolderId = null;
     this.holdTimeSec = 0;
+    this.flightPressureSec = 0;
+    this.deathPauseMs = GAME.DEATH_PAUSE_MS;
+    this.eliminatedPlayerName = holder.name;
+    this.ball = {
+      x: fromX,
+      y: fromY,
+      inFlight: false,
+      targetPlayerId: null,
+    };
+
+    for (const p of this.players.values()) {
+      p.inputX = 0;
+      p.inputY = 0;
+      p.targetX = p.x;
+      p.targetY = p.y;
+    }
+  }
+
+  private finishDeathPause() {
+    this.deathPauseMs = 0;
+    this.eliminatedPlayerName = null;
 
     const alive = [...this.players.values()].filter((p) => p.alive);
-    if (alive.length === 0) return;
+    if (alive.length <= 1) {
+      this.checkWin();
+      return;
+    }
 
     const next = alive[Math.floor(Math.random() * alive.length)]!;
-    this.startBallFlight(fromX, fromY, next.id);
+    this.startBallFlight(this.ball.x, this.ball.y, next.id);
   }
 
   private transferBallToRandomAlive() {

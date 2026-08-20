@@ -41,6 +41,8 @@ export interface GameSnapshot {
   /** 狗當前追擊壓力（持球累積；傳球飛行中凍結） */
   dogPressureSec: number;
   countdownSec: number | null;
+  deathPauseMs: number;
+  eliminatedPlayerName: string | null;
   winnerId: string | null;
   winnerName: string | null;
   roomCount: number;

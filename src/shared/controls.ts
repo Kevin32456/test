@@ -7,8 +7,20 @@ export function getControlMode(): ControlMode {
   return localStorage.getItem(STORAGE_KEY) === "wasd" ? "wasd" : "mouse";
 }
 
+type ControlModeListener = (mode: ControlMode) => void;
+
+const listeners = new Set<ControlModeListener>();
+
 export function setControlMode(mode: ControlMode) {
   localStorage.setItem(STORAGE_KEY, mode);
+  for (const listener of listeners) listener(mode);
+}
+
+export function subscribeControlMode(listener: ControlModeListener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export const CONTROL_MODE_LABELS: Record<ControlMode, string> = {
