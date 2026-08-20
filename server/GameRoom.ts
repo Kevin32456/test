@@ -3,6 +3,7 @@ import {
   arenaCenter,
   clamp,
   distance,
+  normalizeAngle,
 } from "../src/shared/constants.js";
 import {
   getCharacter,
@@ -468,20 +469,48 @@ export class GameRoom {
     let vy = this.dog.vy;
 
     if (dist >= 1) {
-      const headingX = dx / dist;
-      const headingY = dy / dist;
-      const rightX = -headingY;
-      const rightY = headingX;
+      const desiredAngle = Math.atan2(dy, dx);
+      const speed = Math.hypot(vx, vy);
 
-      const vForward = vx * headingX + vy * headingY;
-      const vLateral = vx * rightX + vy * rightY;
+      if (speed > 20) {
+        const currentAngle = Math.atan2(vy, vx);
+        const angleDiff = normalizeAngle(desiredAngle - currentAngle);
+        const sharpTurn = Math.abs(angleDiff) > Math.PI / 2;
 
-      const newForward =
-        vForward + (targetSpeed - vForward) * GAME.DOG_FORWARD_GRIP * dt;
-      const newLateral = vLateral * Math.exp(-GAME.DOG_LATERAL_FRICTION * dt);
+        const turnScale = sharpTurn ? GAME.DOG_SHARP_TURN_SCALE : 1;
+        const maxTurn = GAME.DOG_TURN_RATE * turnScale * dt;
+        const turn = clamp(angleDiff, -maxTurn, maxTurn);
+        const newAngle = currentAngle + turn;
 
-      vx = newForward * headingX + newLateral * rightX;
-      vy = newForward * headingY + newLateral * rightY;
+        const gripScale = sharpTurn ? GAME.DOG_SHARP_TURN_GRIP_SCALE : 1;
+        const newSpeed =
+          speed + (targetSpeed - speed) * GAME.DOG_FORWARD_GRIP * gripScale * dt;
+
+        const speedCap = targetSpeed * 1.15;
+        const clampedSpeed = clamp(newSpeed, 0, speedCap);
+
+        vx = Math.cos(newAngle) * clampedSpeed;
+        vy = Math.sin(newAngle) * clampedSpeed;
+
+        // 大角度轉向時保留橫向慣性（相對新追擊方向的側滑）
+        const headingX = dx / dist;
+        const headingY = dy / dist;
+        const rightX = -headingY;
+        const rightY = headingX;
+        const vForward = vx * headingX + vy * headingY;
+        const vLateral = vx * rightX + vy * rightY;
+        const lateralDamp = Math.exp(-GAME.DOG_LATERAL_FRICTION * dt);
+        vx = vForward * headingX + vLateral * lateralDamp * rightX;
+        vy = vForward * headingY + vLateral * lateralDamp * rightY;
+      } else {
+        const headingX = dx / dist;
+        const headingY = dy / dist;
+        const vForward = vx * headingX + vy * headingY;
+        const forwardImpulse =
+          (targetSpeed - vForward) * GAME.DOG_FORWARD_GRIP * dt;
+        vx += headingX * forwardImpulse;
+        vy += headingY * forwardImpulse;
+      }
     }
 
     let speed = Math.hypot(vx, vy);
