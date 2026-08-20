@@ -359,13 +359,15 @@ export class GameRoom {
 
     if (this.ball.inFlight) {
       this.updateBallFlight(dt);
+      this.updateDogToward(dt, this.ball.x, this.ball.y);
     } else if (this.ballHolderId) {
       const holder = this.players.get(this.ballHolderId);
       if (holder?.alive && holder.hasBall) {
         this.ball.x = holder.x;
         this.ball.y = holder.y - GAME.BALL_HOVER_OFFSET;
         this.holdTimeSec += dt;
-        this.updateDog(dt);
+        const chase = this.getHolderChasePoint(holder);
+        this.updateDogToward(dt, chase.x, chase.y);
         this.checkDogKill();
       }
     }
@@ -418,21 +420,15 @@ export class GameRoom {
     };
   }
 
-  private updateDog(dt: number) {
-    const holder = this.ballHolderId
-      ? this.players.get(this.ballHolderId)
-      : null;
-    if (!holder || !holder.alive || !holder.hasBall) return;
-
+  private updateDogToward(dt: number, chaseX: number, chaseY: number) {
     const targetSpeed = clamp(
       GAME.DOG_BASE_SPEED + this.holdTimeSec * GAME.DOG_ACCEL_PER_SEC,
       GAME.DOG_BASE_SPEED,
       GAME.DOG_MAX_SPEED,
     );
 
-    const chase = this.getHolderChasePoint(holder);
-    const dx = chase.x - this.dog.x;
-    const dy = chase.y - this.dog.y;
+    const dx = chaseX - this.dog.x;
+    const dy = chaseY - this.dog.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 1) return;
 
