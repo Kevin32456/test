@@ -10,7 +10,7 @@ export const GAME = {
   DOG_RADIUS: 22,
   DOG_BASE_SPEED: 145,
   DOG_ACCEL_PER_SEC: 34,
-  DOG_MAX_SPEED: 480,
+  DOG_MAX_SPEED: 560,
   /** 狗追擊點：玩家移動方向前方偏移（像素） */
   DOG_CHASE_FRONT_OFFSET: 30,
   /** 前向抓地力：夠高才能在冰面上追到玩家，略低則更滑 */
