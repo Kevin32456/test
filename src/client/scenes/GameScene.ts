@@ -3,6 +3,7 @@ import { Sfx } from "../audio/Sfx";
 import { expLerp, expLerpAngle } from "../interpolation";
 import { CHARACTERS, getCharacter } from "@shared/characters";
 import { GAME } from "@shared/constants";
+import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
 import type { GameSnapshot, PlayerState } from "@shared/types";
 import {
   getLatestSnapshot,
@@ -87,13 +88,11 @@ export class GameScene extends Phaser.Scene {
     this.threatBar = this.add.graphics().setScrollFactor(0).setDepth(101);
 
     this.hud = this.add
-      .text(12, 12, "", {
-        fontFamily: "Segoe UI, Noto Sans TC, sans-serif",
-        fontSize: "14px",
+      .text(12, 12, "", pixelTextStyle(PIXEL_FONT_SIZES.xs, {
         color: "#e8eaed",
         backgroundColor: "rgba(10,12,16,0.72)",
         padding: { x: 10, y: 8 },
-      })
+      }))
       .setScrollFactor(0)
       .setDepth(100);
 
@@ -346,13 +345,11 @@ export class GameScene extends Phaser.Scene {
       const sec = Math.ceil(snapshot.countdownSec ?? 0);
       if (!this.countdownBanner) {
         this.countdownBanner = this.add
-          .text(GAME.ARENA_WIDTH / 2, GAME.ARENA_HEIGHT / 2, "", {
-            fontFamily: "Segoe UI, Noto Sans TC, sans-serif",
-            fontSize: "72px",
+          .text(GAME.ARENA_WIDTH / 2, GAME.ARENA_HEIGHT / 2, "", pixelTextStyle(PIXEL_FONT_SIZES.countdown, {
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 6,
-          })
+          }))
           .setOrigin(0.5)
           .setDepth(300);
       }
@@ -400,11 +397,9 @@ export class GameScene extends Phaser.Scene {
         this.holderRings.set(p.id, ring);
 
         const label = this.add
-          .text(0, -42, p.name, {
-            fontFamily: "Segoe UI, Noto Sans TC, sans-serif",
-            fontSize: "13px",
+          .text(0, -42, p.name, pixelTextStyle(PIXEL_FONT_SIZES.xs, {
             color: "#ffffff",
-          })
+          }))
           .setOrigin(0.5);
         this.playerLabels.set(p.id, label);
       }
@@ -464,13 +459,11 @@ export class GameScene extends Phaser.Scene {
     if (snapshot.phase === "ended") {
       if (!this.endedBanner) {
         this.endedBanner = this.add
-          .text(GAME.ARENA_WIDTH / 2, GAME.ARENA_HEIGHT / 2, "", {
-            fontFamily: "Segoe UI, Noto Sans TC, sans-serif",
-            fontSize: "28px",
+          .text(GAME.ARENA_WIDTH / 2, GAME.ARENA_HEIGHT / 2, "", pixelTextStyle(PIXEL_FONT_SIZES.md, {
             color: "#ffffff",
             backgroundColor: "rgba(0,0,0,0.65)",
             padding: { x: 24, y: 16 },
-          })
+          }))
           .setOrigin(0.5)
           .setDepth(200);
       }

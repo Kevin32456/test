@@ -10,7 +10,9 @@ body {
   height: 100%;
   background: #101418;
   color: #e8eaed;
-  font-family: "Segoe UI", "Noto Sans TC", sans-serif;
+  font-family: var(--font-pixel);
+  font-size: var(--pixel-base);
+  line-height: 1.5;
   overflow: hidden;
 }
 
@@ -19,60 +21,76 @@ body {
   height: 100%;
 }
 
+#app canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 .overlay-panel {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 10, 14, 0.82);
+  background: rgba(8, 10, 14, 0.88);
   z-index: 10;
 }
 
 .lobby-card {
   width: min(420px, 92vw);
-  padding: 28px;
-  border-radius: 16px;
+  padding: 24px;
+  border-radius: 0;
   background: #171b22;
-  border: 1px solid #2a3140;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  border: 3px solid #2a3140;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45);
 }
 
 .lobby-card h1 {
   margin: 0 0 8px;
-  font-size: 1.6rem;
+  font-size: 24px;
+  letter-spacing: 0.02em;
 }
 
 .lobby-card p {
   margin: 0 0 16px;
   color: #aeb6c2;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .lobby-card input {
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid #3a4254;
+  padding: 10px 12px;
+  border-radius: 0;
+  border: 2px solid #3a4254;
   background: #0f131a;
   color: #fff;
   margin-bottom: 12px;
+  font-family: inherit;
+  font-size: 12px;
 }
 
 .lobby-card button {
   width: 100%;
-  padding: 12px 14px;
-  border: none;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border: 2px solid #2f6fd6;
+  border-radius: 0;
   background: #3d8bfd;
   color: #fff;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 12px;
   cursor: pointer;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.lobby-card button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .lobby-card button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .player-list {
@@ -87,7 +105,7 @@ body {
 
 .section-label {
   margin: 0 0 8px;
-  font-size: 0.9rem;
+  font-size: 12px;
   color: #aeb6c2;
 }
 
@@ -107,21 +125,21 @@ body {
 .char-card {
   position: relative;
   padding: 6px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 2px solid #2a3140;
   background: #0f131a;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.15s;
+  transition: border-color 0.1s, transform 0.1s;
 }
 
 .char-card:hover:not(:disabled) {
   border-color: #3d8bfd;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .char-card.selected {
   border-color: #3d8bfd;
-  box-shadow: 0 0 0 1px #3d8bfd inset;
+  box-shadow: inset 0 0 0 1px #3d8bfd;
 }
 
 .char-card.taken {
@@ -134,8 +152,9 @@ body {
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 0;
   background: #1b2430;
+  image-rendering: pixelated;
 }
 
 .char-preview {
@@ -145,13 +164,13 @@ body {
 .char-name {
   display: block;
   margin-top: 4px;
-  font-size: 0.82rem;
+  font-size: 12px;
   color: #e8eaed;
 }
 
 .char-status {
   display: block;
-  font-size: 0.72rem;
+  font-size: 12px;
   color: #8a939f;
   min-height: 1em;
 }
@@ -160,7 +179,7 @@ body {
   display: inline-block;
   width: 22px;
   height: 28px;
-  border-radius: 4px;
+  border-radius: 0;
   vertical-align: middle;
   margin-right: 6px;
   flex-shrink: 0;
@@ -171,6 +190,7 @@ body {
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid #242a36;
+  font-size: 12px;
 }
 
 
@@ -180,9 +200,9 @@ body {
   left: 12px;
   z-index: 5;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   background: rgba(10, 12, 16, 0.72);
-  font-size: 0.92rem;
+  font-size: 12px;
   line-height: 1.6;
   pointer-events: none;
 }
@@ -190,7 +210,7 @@ body {
 .hud kbd {
   display: inline-block;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 0;
   background: #2a3140;
-  font-size: 0.82rem;
+  font-size: 12px;
 }

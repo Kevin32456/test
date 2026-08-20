@@ -1,0 +1,12 @@
+@font-face {
+  font-family: "Fusion Pixel 12px TC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/fusion-pixel-12px-proportional-zh_hant.ttf.woff2") format("woff2");
+}
+
+:root {
+  --font-pixel: "Fusion Pixel 12px TC", monospace;
+  --pixel-base: 12px;
+}

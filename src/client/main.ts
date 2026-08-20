@@ -11,7 +11,9 @@ import {
   sendAction,
   subscribeState,
 } from "./network";
+import "./fonts.css";
 import "./style.css";
+import { loadPixelFont } from "./loadPixelFont";
 
 let phaserGame: Phaser.Game | null = null;
 let selectedCharacterId = CHARACTERS[0]!.id;
@@ -154,7 +156,10 @@ function ensurePhaser() {
     return;
   }
 
-  phaserGame = new Phaser.Game({
+  void loadPixelFont().then(() => {
+    if (phaserGame) return;
+
+    phaserGame = new Phaser.Game({
     type: Phaser.AUTO,
     parent: "app",
     width: GAME.ARENA_WIDTH,
@@ -165,6 +170,7 @@ function ensurePhaser() {
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: [GameScene],
+    });
   });
 }
 
@@ -182,6 +188,10 @@ function handlePhase(snapshot: GameSnapshot) {
 }
 
 buildCharacterGrid();
+
+void loadPixelFont().then(() => {
+  renderCharacterGrid(latestSnapshot);
+});
 
 characterGrid.addEventListener("click", (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".char-card");
