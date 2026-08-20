@@ -69,13 +69,23 @@ KaMe 蓄力、飛毛腿/風火輪模式、障礙物、養成、新角色技能
 
 ## Git 分支
 
-- `main` — 穩定版
-- `cursor/web-prototype-4p-a9d0` — 目前開發中
+- `main` — 穩定版（設計文件 + 分支規範）
+- `cursor/web-prototype-4p-a9d0` — **目前開發中**：網頁可玩原型
+
+## 執行方式
+
+```bash
+npm install
+npm run dev
+```
+
+- 前端：http://127.0.0.1:4317
+- 伺服器：http://127.0.0.1:4318（Socket.io）
 
 ## 下一個最安全任務
 
-1. 完成 4 人連線可玩一局（移動、傳球、Blink、狗追擊、勝負）
-2. playtest 調狗加速與甩尾參數
+1. 4 個分頁實測一局，playtest 狗加速與甩尾參數
+2. 確認後合併 `cursor/web-prototype-4p-a9d0` → `main`
 
 ## 風險
 
