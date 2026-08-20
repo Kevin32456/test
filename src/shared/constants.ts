@@ -15,7 +15,7 @@ export const GAME = {
   /** 狗造成擊殺的有效半徑；依 sprite 短軸調整 */
   DOG_HIT_RADIUS: 18,
   DOG_BASE_SPEED: 135,
-  DOG_ACCEL_PER_SEC: 46,
+  DOG_ACCEL_PER_SEC: 56,
   /** HUD 壓力條滿格對應秒數（實際狗速與壓力無上限） */
   DOG_PRESSURE_BAR_SEC: 10,
   /** 狗追擊點：近距離時的前方偏移（繞圈卡位用） */
@@ -36,6 +36,11 @@ export const GAME = {
   DOG_SHARP_FACING_TURN_RATE: 16,
   /** 掠過球後反向牽引速度的強度；越高折返距離越短 */
   DOG_REVERSE_GRIP: 5.5,
+  /**
+   * 狗速超過玩家速度後，轉向與折返力道的放大係數。
+   * 1 = 轉彎半徑不隨速度變大，避免高速甩尾變成無敵；0 = 舊行為。
+   */
+  DOG_SPEED_AGILITY_GAIN: 0.9,
   /** 繞圈時前向抓地力（低 = 速度慣性、外甩） */
   DOG_ORBIT_FORWARD_GRIP: 5.0,
   /** 落後追回時前向抓地力 */
@@ -49,7 +54,7 @@ export const GAME = {
   /** 撞牆後速度保留比例 */
   DOG_WALL_SLIDE: 0.48,
   /** 傳球當下保留的狗壓力比例（飛行中壓力繼續累加） */
-  DOG_PRESSURE_PASS_RETAIN: 0.85,
+  DOG_PRESSURE_PASS_RETAIN: 0.9,
   /** 伺服器物理步進頻率 */
   TICK_HZ: 60,
   /** 位置快照送出頻率；傳球、Blink、擊殺等事件不受此限，發生即送 */

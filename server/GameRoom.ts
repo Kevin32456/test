@@ -588,13 +588,20 @@ export class GameRoom {
       0,
       1,
     );
+    const dogSpeed = Math.hypot(this.dog.vx, this.dog.vy);
+    /** 轉彎半徑 = 速度 ÷ 轉向速率；速度變快時同步放大轉向，半徑才不會失控 */
+    const agility =
+      1 +
+      Math.max(0, dogSpeed / GAME.PLAYER_SPEED - 1) *
+        GAME.DOG_SPEED_AGILITY_GAIN;
     const turnRate =
-      GAME.DOG_ORBIT_TURN_RATE +
-      (GAME.DOG_TURN_RATE - GAME.DOG_ORBIT_TURN_RATE) * recovery;
+      (GAME.DOG_ORBIT_TURN_RATE +
+        (GAME.DOG_TURN_RATE - GAME.DOG_ORBIT_TURN_RATE) * recovery) *
+      agility;
     const forwardGrip =
       (GAME.DOG_ORBIT_FORWARD_GRIP +
         (GAME.DOG_FORWARD_GRIP - GAME.DOG_ORBIT_FORWARD_GRIP) * recovery) *
-      (Math.hypot(this.dog.vx, this.dog.vy) < targetSpeed * 0.45 ? 2.4 : 1);
+      (dogSpeed < targetSpeed * 0.45 ? 2.4 : 1);
 
     let vx = this.dog.vx;
     let vy = this.dog.vy;
@@ -628,7 +635,11 @@ export class GameRoom {
 
         if (sharpTurn) {
           // 掠過目標後不直接旋轉速度；以反向牽引煞停，保留短暫後滑。
-          const reverseBlend = clamp(GAME.DOG_REVERSE_GRIP * dt, 0, 1);
+          const reverseBlend = clamp(
+            GAME.DOG_REVERSE_GRIP * agility * dt,
+            0,
+            1,
+          );
           vx += (headingX * targetSpeed - vx) * reverseBlend;
           vy += (headingY * targetSpeed - vy) * reverseBlend;
         } else {

@@ -136,6 +136,10 @@ export class GameScene extends Phaser.Scene {
     this.unsubState?.();
     this.unsubState = null;
     this.prevSnapshot = null;
+    this.playerSprites.clear();
+    this.playerLabels.clear();
+    this.holderRings.clear();
+    this.displayPlayers.clear();
   }
 
   update(_time: number, delta: number) {
@@ -347,6 +351,20 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private removePlayerVisuals(id: string) {
+    const container = this.playerSprites.get(id);
+    if (container) {
+      this.tweens.killTweensOf(container);
+      container.destroy(true);
+    }
+    this.playerLabels.get(id)?.destroy();
+    this.holderRings.get(id)?.destroy();
+    this.playerSprites.delete(id);
+    this.playerLabels.delete(id);
+    this.holderRings.delete(id);
+    this.displayPlayers.delete(id);
+  }
+
   private resetRoundVisuals() {
     if (this.endedBanner) {
       this.endedBanner.destroy();
@@ -476,6 +494,12 @@ export class GameScene extends Phaser.Scene {
 
       const label = this.playerLabels.get(p.id)!;
       label.setText(p.name + (p.id === getPlayerId() ? "（你）" : ""));
+    }
+
+    const liveIds = new Set(snapshot.players.map((p) => p.id));
+    for (const id of [...this.displayPlayers.keys()]) {
+      if (liveIds.has(id)) continue;
+      this.removePlayerVisuals(id);
     }
 
     this.displayDog.tx = snapshot.dog.x;
