@@ -61,7 +61,7 @@ export const GAME = {
   LOBBY_RESET_MS: 5000,
   BALL_RADIUS: 8,
   BALL_HOVER_OFFSET: 28,
-  BALL_FLIGHT_SPEED: 540,
+  BALL_FLIGHT_SPEED: 800,
   BALL_ARRIVE_DIST: 14,
   COLORS: ["#4fc3f7", "#81c784", "#ffb74d", "#e57373"],
 } as const;
