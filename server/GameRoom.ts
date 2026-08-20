@@ -2,8 +2,10 @@ import {
   GAME,
   arenaCenter,
   clamp,
+  clampToArena,
   distance,
   normalizeAngle,
+  slideCircleWall,
 } from "../src/shared/constants.js";
 import {
   getCharacter,
@@ -26,6 +28,8 @@ interface InternalPlayer {
   y: number;
   targetX: number;
   targetY: number;
+  inputX: number;
+  inputY: number;
   alive: boolean;
   hasBall: boolean;
   blinkCooldownMs: number;
@@ -76,6 +80,8 @@ export class GameRoom {
       y: spawn.y,
       targetX: spawn.x,
       targetY: spawn.y,
+      inputX: 0,
+      inputY: 0,
       alive: true,
       hasBall: false,
       blinkCooldownMs: 0,
@@ -139,17 +145,23 @@ export class GameRoom {
 
     switch (action.type) {
       case "move":
-        player.targetX = clamp(
-          action.x,
-          GAME.PLAYER_RADIUS,
-          GAME.ARENA_WIDTH - GAME.PLAYER_RADIUS,
-        );
-        player.targetY = clamp(
-          action.y,
-          GAME.PLAYER_RADIUS,
-          GAME.ARENA_HEIGHT - GAME.PLAYER_RADIUS,
-        );
+        player.inputX = 0;
+        player.inputY = 0;
+        {
+          const clamped = clampToArena(action.x, action.y, GAME.PLAYER_RADIUS);
+          player.targetX = clamped.x;
+          player.targetY = clamped.y;
+        }
         break;
+      case "moveInput": {
+        player.inputX = clamp(action.x, -1, 1);
+        player.inputY = clamp(action.y, -1, 1);
+        if (Math.hypot(player.inputX, player.inputY) > 0.01) {
+          player.targetX = player.x;
+          player.targetY = player.y;
+        }
+        break;
+      }
       case "pass": {
         if (!player.hasBall || this.ball.inFlight) return;
         const target = this.players.get(action.targetId);
@@ -170,18 +182,17 @@ export class GameRoom {
         if (len < 1) return;
         const nx = dx / len;
         const ny = dy / len;
-        player.x = clamp(
+        const blinked = clampToArena(
           player.x + nx * GAME.BLINK_DISTANCE,
-          GAME.PLAYER_RADIUS,
-          GAME.ARENA_WIDTH - GAME.PLAYER_RADIUS,
-        );
-        player.y = clamp(
           player.y + ny * GAME.BLINK_DISTANCE,
           GAME.PLAYER_RADIUS,
-          GAME.ARENA_HEIGHT - GAME.PLAYER_RADIUS,
         );
+        player.x = blinked.x;
+        player.y = blinked.y;
         player.targetX = player.x;
         player.targetY = player.y;
+        player.inputX = 0;
+        player.inputY = 0;
         player.blinkCooldownMs = GAME.BLINK_COOLDOWN_MS;
         break;
       }
@@ -406,17 +417,40 @@ export class GameRoom {
   }
 
   private movePlayer(p: InternalPlayer, dt: number) {
+    if (Math.hypot(p.inputX, p.inputY) > 0.01) {
+      const len = Math.hypot(p.inputX, p.inputY);
+      const nx = p.inputX / len;
+      const ny = p.inputY / len;
+      const step = GAME.PLAYER_SPEED * dt;
+      const moved = clampToArena(
+        p.x + nx * step,
+        p.y + ny * step,
+        GAME.PLAYER_RADIUS,
+      );
+      p.x = moved.x;
+      p.y = moved.y;
+      p.targetX = p.x;
+      p.targetY = p.y;
+      return;
+    }
+
     const dx = p.targetX - p.x;
     const dy = p.targetY - p.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 2) return;
     const step = GAME.PLAYER_SPEED * dt;
     if (dist <= step) {
-      p.x = p.targetX;
-      p.y = p.targetY;
+      const moved = clampToArena(p.targetX, p.targetY, GAME.PLAYER_RADIUS);
+      p.x = moved.x;
+      p.y = moved.y;
     } else {
-      p.x += (dx / dist) * step;
-      p.y += (dy / dist) * step;
+      const moved = clampToArena(
+        p.x + (dx / dist) * step,
+        p.y + (dy / dist) * step,
+        GAME.PLAYER_RADIUS,
+      );
+      p.x = moved.x;
+      p.y = moved.y;
     }
   }
 
@@ -524,24 +558,19 @@ export class GameRoom {
 
     const nextX = this.dog.x + vx * dt;
     const nextY = this.dog.y + vy * dt;
-    const clampedX = clamp(
+    const wall = slideCircleWall(
       nextX,
-      GAME.DOG_RADIUS,
-      GAME.ARENA_WIDTH - GAME.DOG_RADIUS,
-    );
-    const clampedY = clamp(
       nextY,
+      vx,
+      vy,
       GAME.DOG_RADIUS,
-      GAME.ARENA_HEIGHT - GAME.DOG_RADIUS,
+      GAME.DOG_WALL_SLIDE,
     );
 
-    if (clampedX !== nextX) vx *= GAME.DOG_WALL_SLIDE;
-    if (clampedY !== nextY) vy *= GAME.DOG_WALL_SLIDE;
-
-    this.dog.vx = vx;
-    this.dog.vy = vy;
-    this.dog.x = clampedX;
-    this.dog.y = clampedY;
+    this.dog.vx = wall.vx;
+    this.dog.vy = wall.vy;
+    this.dog.x = wall.x;
+    this.dog.y = wall.y;
     this.dog.speed = Math.hypot(vx, vy);
 
     if (this.dog.speed > 10) {
@@ -624,16 +653,13 @@ export class GameRoom {
   }
 
   private spawnPoint(index: number) {
-    const margin = 80;
-    const points = [
-      { x: margin, y: margin },
-      { x: GAME.ARENA_WIDTH - margin, y: margin },
-      { x: margin, y: GAME.ARENA_HEIGHT - margin },
-      {
-        x: GAME.ARENA_WIDTH - margin,
-        y: GAME.ARENA_HEIGHT - margin,
-      },
-    ];
-    return points[index % points.length]!;
+    const c = arenaCenter();
+    const r = GAME.ARENA_RADIUS * 0.62;
+    const angles = [-Math.PI * 0.75, -Math.PI * 0.25, Math.PI * 0.75, Math.PI * 0.25];
+    const a = angles[index % angles.length]!;
+    return {
+      x: c.x + Math.cos(a) * r,
+      y: c.y + Math.sin(a) * r,
+    };
   }
 }

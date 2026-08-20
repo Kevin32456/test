@@ -15,9 +15,16 @@ import "./fonts.css";
 import "./style.css";
 import { loadPixelFont } from "./loadPixelFont";
 import { characterDataURL } from "./pixelArt";
+import {
+  getControlMode,
+  setControlMode,
+  type ControlMode,
+  CONTROL_MODE_LABELS,
+} from "@shared/controls";
 
 let phaserGame: Phaser.Game | null = null;
 let selectedCharacterId = CHARACTERS[0]!.id;
+let selectedControlMode: ControlMode = getControlMode();
 let hasJoined = false;
 
 const overlay = document.createElement("div");
@@ -37,6 +44,11 @@ overlay.innerHTML = `
     <p class="lobby-desc">選擇角色後加入房間，每位角色僅限一人。</p>
     <label class="field-label" for="name-input">暱稱</label>
     <input id="name-input" maxlength="16" placeholder="輸入暱稱" value="玩家" />
+    <p class="section-label"><span>操控模式</span></p>
+    <div id="control-mode-grid" class="control-mode-grid">
+      <button type="button" class="control-mode-btn" data-mode="mouse">滑鼠右鍵</button>
+      <button type="button" class="control-mode-btn" data-mode="wasd">WASD</button>
+    </div>
     <p class="section-label"><span>選擇角色</span></p>
     <div id="character-grid" class="character-grid"></div>
     <ul id="player-list" class="player-list"></ul>
@@ -53,6 +65,15 @@ const playerList = overlay.querySelector("#player-list") as HTMLUListElement;
 const lobbyStatus = overlay.querySelector("#lobby-status") as HTMLParagraphElement;
 const joinBtn = overlay.querySelector("#join-btn") as HTMLButtonElement;
 const startBtn = overlay.querySelector("#start-btn") as HTMLButtonElement;
+const controlModeGrid = overlay.querySelector("#control-mode-grid") as HTMLDivElement;
+
+function renderControlMode() {
+  controlModeGrid.querySelectorAll<HTMLButtonElement>(".control-mode-btn").forEach((btn) => {
+    const mode = btn.dataset.mode as ControlMode;
+    btn.classList.toggle("selected", mode === selectedControlMode);
+    btn.setAttribute("aria-pressed", String(mode === selectedControlMode));
+  });
+}
 
 function buildCharacterGrid() {
   characterGrid.innerHTML = CHARACTERS.map(
@@ -143,7 +164,7 @@ function renderLobby(snapshot: GameSnapshot) {
     .join("");
 
   if (snapshot.phase === "lobby") {
-    lobbyStatus.textContent = `等待玩家 ${snapshot.roomCount}/${GAME.MAX_PLAYERS}（滿 4 人自動開始）`;
+    lobbyStatus.textContent = `等待玩家 ${snapshot.roomCount}/${GAME.MAX_PLAYERS} · 操控：${CONTROL_MODE_LABELS[selectedControlMode]}`;
     startBtn.style.display = hasJoined ? "block" : "none";
     startBtn.disabled = snapshot.roomCount < GAME.MIN_PLAYERS_TO_START;
     joinBtn.textContent = hasJoined ? "已加入房間" : "加入房間";
@@ -201,6 +222,16 @@ function handlePhase(snapshot: GameSnapshot) {
 }
 
 buildCharacterGrid();
+renderControlMode();
+
+controlModeGrid.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".control-mode-btn");
+  if (!btn) return;
+  const mode = btn.dataset.mode as ControlMode;
+  selectedControlMode = mode;
+  setControlMode(mode);
+  renderControlMode();
+});
 
 void loadPixelFont().then(() => {
   renderCharacterGrid(latestSnapshot);

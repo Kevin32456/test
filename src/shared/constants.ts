@@ -3,6 +3,8 @@ export const GAME = {
   MIN_PLAYERS_TO_START: 2,
   ARENA_WIDTH: 900,
   ARENA_HEIGHT: 900,
+  /** 圓形競技場半徑（中心為 ARENA 正中央） */
+  ARENA_RADIUS: 420,
   PLAYER_RADIUS: 18,
   PLAYER_SPEED: 220,
   BLINK_DISTANCE: 140,
@@ -45,6 +47,48 @@ export const arenaCenter = () => ({
   x: GAME.ARENA_WIDTH / 2,
   y: GAME.ARENA_HEIGHT / 2,
 });
+
+/** 將實體限制在圓形競技場內 */
+export const clampToArena = (x: number, y: number, entityRadius: number) => {
+  const c = arenaCenter();
+  const maxR = GAME.ARENA_RADIUS - entityRadius;
+  const dx = x - c.x;
+  const dy = y - c.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist <= maxR || dist < 0.001) return { x, y };
+  const scale = maxR / dist;
+  return { x: c.x + dx * scale, y: c.y + dy * scale };
+};
+
+/** 圓形邊界碰撞：推回場內並沿切線滑動 */
+export const slideCircleWall = (
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  entityRadius: number,
+  slide: number,
+) => {
+  const c = arenaCenter();
+  const maxR = GAME.ARENA_RADIUS - entityRadius;
+  const dx = x - c.x;
+  const dy = y - c.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist <= maxR) return { x, y, vx, vy };
+
+  const nx = dx / dist;
+  const ny = dy / dist;
+  const px = c.x + nx * maxR;
+  const py = c.y + ny * maxR;
+  const vDotN = vx * nx + vy * ny;
+  let nvx = vx;
+  let nvy = vy;
+  if (vDotN > 0) {
+    nvx = (vx - vDotN * nx) * slide;
+    nvy = (vy - vDotN * ny) * slide;
+  }
+  return { x: px, y: py, vx: nvx, vy: nvy };
+};
 
 export const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
