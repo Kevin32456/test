@@ -6,29 +6,29 @@ export const GAME = {
   /** 圓形競技場半徑（中心為 ARENA 正中央） */
   ARENA_RADIUS: 420,
   PLAYER_RADIUS: 18,
-  PLAYER_SPEED: 235,
-  BLINK_DISTANCE: 150,
-  BLINK_COOLDOWN_MS: 3000,
+  PLAYER_SPEED: 245,
+  BLINK_DISTANCE: 160,
+  BLINK_COOLDOWN_MS: 2800,
   DOG_RADIUS: 22,
-  DOG_BASE_SPEED: 138,
-  DOG_ACCEL_PER_SEC: 30,
-  DOG_MAX_SPEED: 470,
+  DOG_BASE_SPEED: 120,
+  DOG_ACCEL_PER_SEC: 22,
+  DOG_MAX_SPEED: 410,
   /** 狗追擊點：玩家移動方向前方偏移（像素）— 越大越容易被繞背 */
-  DOG_CHASE_FRONT_OFFSET: 34,
+  DOG_CHASE_FRONT_OFFSET: 42,
   /** 前向抓地力：沿當前速度方向加減速 */
-  DOG_FORWARD_GRIP: 6.2,
+  DOG_FORWARD_GRIP: 5.0,
   /** 速度向量最大轉向角速度（弧度/秒）— 越小越難急轉、甩尾越長 */
-  DOG_TURN_RATE: 2.6,
+  DOG_TURN_RATE: 2.0,
   /** 追擊方向與速度夾角 >90° 時，轉向速率再縮放（傳球反向甩尾） */
-  DOG_SHARP_TURN_SCALE: 0.28,
+  DOG_SHARP_TURN_SCALE: 0.2,
   /** 大角度轉向時加減速縮放，保留橫向慣性 */
-  DOG_SHARP_TURN_GRIP_SCALE: 0.22,
+  DOG_SHARP_TURN_GRIP_SCALE: 0.16,
   /** 側向摩擦：越小甩尾越長（越像冰面） */
-  DOG_LATERAL_FRICTION: 0.12,
+  DOG_LATERAL_FRICTION: 0.08,
   /** 撞牆後速度保留比例 */
   DOG_WALL_SLIDE: 0.48,
   /** 傳球接球後保留的狗壓力比例 */
-  DOG_PRESSURE_PASS_RETAIN: 0.62,
+  DOG_PRESSURE_PASS_RETAIN: 0.5,
   TICK_HZ: 20,
   /** 客戶端插值平滑係數（越大越貼近伺服器） */
   CLIENT_LERP: 14,
