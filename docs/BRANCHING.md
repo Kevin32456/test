@@ -62,6 +62,10 @@ git reset --hard <commit-sha>   # 僅在確定要丟棄後續提交時使用
 
 | 分支 | 狀態 | 說明 |
 |------|------|------|
+| `main` | **v0.1.0** | 穩定可玩版 |
 | `cursor/design-docs-baseline-a9d0` | 已合併 | GDD、交接文件、分支規範 |
-| `cursor/web-prototype-4p-a9d0` | 已推送 | 網頁 Phaser + Socket.io 4 人連線原型 |
-| `cursor/fix-round2-and-ball-anim-a9d0` | 開發中 | 修第二局卡死 + 球路動畫 |
+| `cursor/web-prototype-4p-a9d0` | 已合併 | 網頁 4 人連線原型 |
+| `cursor/fix-round2-and-ball-anim-a9d0` | 已合併 | 第二局 + 球路動畫 |
+| `cursor/tune-dog-speed-a9d0` | 已合併 | 狗速平衡 |
+| `cursor/dog-slower-front-chase-a9d0` | 已合併 | 狗更慢 + 追正面 |
+| `cursor/dog-chase-ball-in-flight-a9d0` | 已合併 | 傳球中狗追球 |
