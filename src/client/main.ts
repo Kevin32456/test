@@ -160,16 +160,16 @@ function ensurePhaser() {
     if (phaserGame) return;
 
     phaserGame = new Phaser.Game({
-    type: Phaser.AUTO,
-    parent: "app",
-    width: GAME.ARENA_WIDTH,
-    height: GAME.ARENA_HEIGHT,
-    backgroundColor: "#141922",
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-    },
-    scene: [GameScene],
+      type: Phaser.AUTO,
+      parent: "app",
+      width: GAME.ARENA_WIDTH,
+      height: GAME.ARENA_HEIGHT,
+      backgroundColor: "#141922",
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+      },
+      scene: [GameScene],
     });
   });
 }
