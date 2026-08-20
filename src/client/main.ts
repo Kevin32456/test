@@ -45,7 +45,7 @@ function buildCharacterGrid() {
   characterGrid.innerHTML = CHARACTERS.map(
     (c) => `
     <button type="button" class="char-card" data-id="${c.id}" aria-label="${c.name}">
-      <img src="${c.asset}" alt="${c.name}" />
+      <img src="${c.asset}" alt="${c.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'char-preview',style:'background:${c.color}'}))" />
       <span class="char-name">${c.name}</span>
       <span class="char-status"></span>
     </button>`,
@@ -124,7 +124,7 @@ function renderLobby(snapshot: GameSnapshot) {
   playerList.innerHTML = snapshot.players
     .map((p) => {
       const char = CHARACTERS.find((c) => c.id === p.characterId);
-      return `<li><img class="player-char-icon" src="${char?.asset ?? ""}" alt="" /> ${p.name} · ${char?.name ?? ""}${p.id === playerId ? "（你）" : ""}</li>`;
+      return `<li><span class="player-char-icon" style="background:${char?.color ?? "#666"}"></span> ${p.name} · ${char?.name ?? ""}${p.id === playerId ? "（你）" : ""}</li>`;
     })
     .join("");
 

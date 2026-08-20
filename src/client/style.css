@@ -129,12 +129,17 @@ body {
   cursor: not-allowed;
 }
 
-.char-card img {
+.char-card img,
+.char-preview {
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border-radius: 8px;
   background: #1b2430;
+}
+
+.char-preview {
+  display: block;
 }
 
 .char-name {
@@ -152,12 +157,13 @@ body {
 }
 
 .player-char-icon {
+  display: inline-block;
   width: 22px;
   height: 28px;
-  object-fit: cover;
   border-radius: 4px;
   vertical-align: middle;
   margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .player-list li {
