@@ -71,7 +71,8 @@ cloudflared tunnel --url http://127.0.0.1:4318
 
 ## Git
 
-見 [docs/BRANCHING.md](docs/BRANCHING.md)。穩定版在 `main`。
+- **Repository**：https://github.com/Kevin32456/test
+- 分支策略見 [docs/BRANCHING.md](docs/BRANCHING.md)。穩定版在 `main`。
 
 ## 文件
 
