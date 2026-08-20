@@ -3,7 +3,6 @@ import {
   arenaCenter,
   clamp,
   distance,
-  normalizeAngle,
 } from "../src/shared/constants.js";
 import type {
   BallState,
@@ -41,7 +40,9 @@ export class GameRoom {
     x: arenaCenter().x,
     y: arenaCenter().y,
     angle: 0,
-    speed: GAME.DOG_BASE_SPEED,
+    speed: 0,
+    vx: 0,
+    vy: 0,
   };
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private endResetTimer: ReturnType<typeof setTimeout> | null = null;
@@ -217,7 +218,9 @@ export class GameRoom {
       x: c.x,
       y: c.y,
       angle: 0,
-      speed: GAME.DOG_BASE_SPEED,
+      speed: 0,
+      vx: 0,
+      vy: 0,
     };
   }
 
@@ -246,7 +249,9 @@ export class GameRoom {
     const c = arenaCenter();
     this.dog.x = c.x;
     this.dog.y = c.y;
-    this.dog.speed = GAME.DOG_BASE_SPEED;
+    this.dog.speed = 0;
+    this.dog.vx = 0;
+    this.dog.vy = 0;
     this.dog.angle = 0;
 
     this.startBallFlight(c.x, c.y, starter);
@@ -296,6 +301,10 @@ export class GameRoom {
       target.y - this.dog.y,
       target.x - this.dog.x,
     );
+    const landSpeed = GAME.DOG_BASE_SPEED * 0.6;
+    this.dog.vx = Math.cos(this.dog.angle) * landSpeed;
+    this.dog.vy = Math.sin(this.dog.angle) * landSpeed;
+    this.dog.speed = landSpeed;
   }
 
   private updateBallFlight(dt: number) {
@@ -440,27 +449,63 @@ export class GameRoom {
     const dx = chaseX - this.dog.x;
     const dy = chaseY - this.dog.y;
     const dist = Math.hypot(dx, dy);
-    if (dist < 1) return;
 
-    const desiredAngle = Math.atan2(dy, dx);
-    let angleDiff = normalizeAngle(desiredAngle - this.dog.angle);
-    const maxTurn = GAME.DOG_MAX_TURN_RATE * dt;
-    angleDiff = clamp(angleDiff, -maxTurn, maxTurn);
-    this.dog.angle += angleDiff;
-    this.dog.speed = targetSpeed;
-    this.dog.x += Math.cos(this.dog.angle) * targetSpeed * dt;
-    this.dog.y += Math.sin(this.dog.angle) * targetSpeed * dt;
+    let vx = this.dog.vx;
+    let vy = this.dog.vy;
 
-    this.dog.x = clamp(
-      this.dog.x,
+    if (dist >= 1) {
+      const headingX = dx / dist;
+      const headingY = dy / dist;
+      const rightX = -headingY;
+      const rightY = headingX;
+
+      const vForward = vx * headingX + vy * headingY;
+      const vLateral = vx * rightX + vy * rightY;
+
+      const newForward =
+        vForward + (targetSpeed - vForward) * GAME.DOG_FORWARD_GRIP * dt;
+      const newLateral = vLateral * Math.exp(-GAME.DOG_LATERAL_FRICTION * dt);
+
+      vx = newForward * headingX + newLateral * rightX;
+      vy = newForward * headingY + newLateral * rightY;
+    }
+
+    let speed = Math.hypot(vx, vy);
+    const speedCap = targetSpeed * 1.12;
+    if (speed > speedCap) {
+      const scale = speedCap / speed;
+      vx *= scale;
+      vy *= scale;
+      speed = speedCap;
+    }
+
+    const nextX = this.dog.x + vx * dt;
+    const nextY = this.dog.y + vy * dt;
+    const clampedX = clamp(
+      nextX,
       GAME.DOG_RADIUS,
       GAME.ARENA_WIDTH - GAME.DOG_RADIUS,
     );
-    this.dog.y = clamp(
-      this.dog.y,
+    const clampedY = clamp(
+      nextY,
       GAME.DOG_RADIUS,
       GAME.ARENA_HEIGHT - GAME.DOG_RADIUS,
     );
+
+    if (clampedX !== nextX) vx *= GAME.DOG_WALL_SLIDE;
+    if (clampedY !== nextY) vy *= GAME.DOG_WALL_SLIDE;
+
+    this.dog.vx = vx;
+    this.dog.vy = vy;
+    this.dog.x = clampedX;
+    this.dog.y = clampedY;
+    this.dog.speed = Math.hypot(vx, vy);
+
+    if (this.dog.speed > 10) {
+      this.dog.angle = Math.atan2(vy, vx);
+    } else if (dist >= 1) {
+      this.dog.angle = Math.atan2(dy, dx);
+    }
   }
 
   private checkDogKill() {

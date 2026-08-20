@@ -13,11 +13,17 @@ export const GAME = {
   DOG_MAX_SPEED: 320,
   /** 狗追擊點：玩家移動方向前方偏移（像素） */
   DOG_CHASE_FRONT_OFFSET: 30,
-  /** 弧度/秒 — 越小甩尾越明顯 */
-  DOG_MAX_TURN_RATE: 2.8,
+  /** 前向抓地力：越小越難加速/減速（地板更滑） */
+  DOG_FORWARD_GRIP: 3.2,
+  /** 側向摩擦：越小甩尾越長（越像冰面） */
+  DOG_LATERAL_FRICTION: 0.95,
+  /** 撞牆後速度保留比例 */
+  DOG_WALL_SLIDE: 0.38,
   TICK_HZ: 20,
   /** 客戶端插值平滑係數（越大越貼近伺服器） */
   CLIENT_LERP: 14,
+  /** 狗視覺插值（略低較能呈現滑動感） */
+  CLIENT_DOG_LERP: 9,
   COUNTDOWN_SECONDS: 3,
   LOBBY_RESET_MS: 5000,
   BALL_RADIUS: 8,

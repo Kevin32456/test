@@ -149,9 +149,9 @@ export class GameScene extends Phaser.Scene {
 
     if (snapshot.phase === "playing" || snapshot.phase === "countdown") {
       const d = this.displayDog;
-      d.x = expLerp(d.x, d.tx, delta, lerp);
-      d.y = expLerp(d.y, d.ty, delta, lerp);
-      d.angle = expLerpAngle(d.angle, d.targetAngle, delta, lerp);
+      d.x = expLerp(d.x, d.tx, delta, GAME.CLIENT_DOG_LERP);
+      d.y = expLerp(d.y, d.ty, delta, GAME.CLIENT_DOG_LERP);
+      d.angle = expLerpAngle(d.angle, d.targetAngle, delta, GAME.CLIENT_DOG_LERP);
       this.dogSprite.setPosition(d.x, d.y);
       this.dogSprite.setRotation(d.angle);
     }

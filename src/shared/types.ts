@@ -18,6 +18,8 @@ export interface DogState {
   y: number;
   angle: number;
   speed: number;
+  vx: number;
+  vy: number;
 }
 
 export interface BallState {
