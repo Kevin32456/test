@@ -19,6 +19,8 @@ export const GAME = {
   DOG_LATERAL_FRICTION: 0.58,
   /** 撞牆後速度保留比例 */
   DOG_WALL_SLIDE: 0.48,
+  /** 傳球接球後保留的狗壓力比例 */
+  DOG_PRESSURE_PASS_RETAIN: 0.8,
   TICK_HZ: 20,
   /** 客戶端插值平滑係數（越大越貼近伺服器） */
   CLIENT_LERP: 14,

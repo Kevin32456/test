@@ -291,8 +291,8 @@ export class GameRoom {
     }
     target.hasBall = true;
     this.ballHolderId = target.id;
-    /** 傳球落地：延續飛行前的狗壓，不歸零 */
-    this.holdTimeSec = this.flightPressureSec;
+    /** 傳球落地：保留 80% 狗壓 */
+    this.holdTimeSec = this.flightPressureSec * GAME.DOG_PRESSURE_PASS_RETAIN;
     this.flightPressureSec = 0;
     this.ball.inFlight = false;
     this.ball.targetPlayerId = null;
