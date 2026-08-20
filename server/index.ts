@@ -19,8 +19,17 @@ const io = new Server(httpServer, {
     : { origin: ["http://127.0.0.1:4317", "http://localhost:4317"] },
 });
 
-const room = new GameRoom(() => {
+const SEND_INTERVAL_MS = 1000 / GAME.NET_SEND_HZ;
+let lastSentAt = 0;
+
+function emitState() {
+  lastSentAt = Date.now();
   io.emit("state", room.getSnapshot());
+}
+
+const room = new GameRoom((immediate) => {
+  if (!immediate && Date.now() - lastSentAt < SEND_INTERVAL_MS) return;
+  emitState();
 });
 
 app.get("/health", (_req, res) => {
@@ -51,7 +60,7 @@ io.on("connection", (socket) => {
       playerId: socket.id,
       snapshot: room.getSnapshot(),
     });
-    io.emit("state", room.getSnapshot());
+    emitState();
   });
 
   socket.on("action", (action: ClientAction) => {
@@ -60,7 +69,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     room.removePlayer(socket.id);
-    io.emit("state", room.getSnapshot());
+    emitState();
   });
 });
 

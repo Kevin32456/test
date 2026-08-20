@@ -50,7 +50,10 @@ export const GAME = {
   DOG_WALL_SLIDE: 0.48,
   /** 傳球當下保留的狗壓力比例（飛行中壓力繼續累加） */
   DOG_PRESSURE_PASS_RETAIN: 0.85,
-  TICK_HZ: 20,
+  /** 伺服器物理步進頻率 */
+  TICK_HZ: 60,
+  /** 位置快照送出頻率；傳球、Blink、擊殺等事件不受此限，發生即送 */
+  NET_SEND_HZ: 30,
   /** 客戶端插值平滑係數（越大越貼近伺服器） */
   CLIENT_LERP: 14,
   /** 狗視覺插值（略低較能呈現滑動感） */

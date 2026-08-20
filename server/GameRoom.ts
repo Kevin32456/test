@@ -19,6 +19,10 @@ import type {
   GameSnapshot,
 } from "../src/shared/types.js";
 
+const px = (v: number) => Math.round(v * 10) / 10;
+const rad = (v: number) => Math.round(v * 1000) / 1000;
+const sec = (v: number) => Math.round(v * 100) / 100;
+
 interface InternalPlayer {
   id: string;
   name: string;
@@ -58,10 +62,18 @@ export class GameRoom {
   };
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private endResetTimer: ReturnType<typeof setTimeout> | null = null;
-  private onBroadcast: () => void;
+  private pendingEvent = false;
+  private onBroadcast: (immediate: boolean) => void;
 
-  constructor(onBroadcast: () => void) {
+  constructor(onBroadcast: (immediate: boolean) => void) {
     this.onBroadcast = onBroadcast;
+  }
+
+  /** 一般位置更新走送包節流；本幀有事件發生時立即送出 */
+  private broadcast() {
+    const immediate = this.pendingEvent;
+    this.pendingEvent = false;
+    this.onBroadcast(immediate);
   }
 
   addPlayer(id: string, name: string, characterId: string): boolean {
@@ -139,7 +151,7 @@ export class GameRoom {
       const char = getCharacter(action.characterId)!;
       player.characterId = action.characterId;
       player.color = char.color;
-      this.onBroadcast();
+      this.onBroadcast(true);
       return;
     }
 
@@ -180,6 +192,7 @@ export class GameRoom {
           player.y - GAME.BALL_HOVER_OFFSET,
           target.id,
         );
+        this.onBroadcast(true);
         break;
       }
       case "blink": {
@@ -202,6 +215,7 @@ export class GameRoom {
         player.inputX = 0;
         player.inputY = 0;
         player.blinkCooldownMs = GAME.BLINK_COOLDOWN_MS;
+        this.onBroadcast(true);
         break;
       }
     }
@@ -211,14 +225,33 @@ export class GameRoom {
     return {
       phase: this.phase,
       matchSeq: this.matchSeq,
-      players: [...this.players.values()].map((p) => ({ ...p })),
-      dog: { ...this.dog },
-      ball: { ...this.ball },
+      players: [...this.players.values()].map((p) => ({
+        id: p.id,
+        name: p.name,
+        characterId: p.characterId,
+        color: p.color,
+        x: px(p.x),
+        y: px(p.y),
+        alive: p.alive,
+        hasBall: p.hasBall,
+        blinkCooldownMs: Math.round(p.blinkCooldownMs),
+      })),
+      dog: {
+        x: px(this.dog.x),
+        y: px(this.dog.y),
+        angle: rad(this.dog.angle),
+      },
+      ball: {
+        x: px(this.ball.x),
+        y: px(this.ball.y),
+        inFlight: this.ball.inFlight,
+        targetPlayerId: this.ball.targetPlayerId,
+      },
       ballHolderId: this.ballHolderId,
-      holdTimeSec: this.holdTimeSec,
-      dogPressureSec: this.getDogPressureSec(),
-      countdownSec: this.countdownSec,
-      deathPauseMs: this.deathPauseMs,
+      holdTimeSec: sec(this.holdTimeSec),
+      dogPressureSec: sec(this.getDogPressureSec()),
+      countdownSec: this.countdownSec === null ? null : sec(this.countdownSec),
+      deathPauseMs: Math.round(this.deathPauseMs),
       eliminatedPlayerName: this.eliminatedPlayerName,
       winnerId: this.winnerId,
       winnerName: this.winnerName,
@@ -276,6 +309,7 @@ export class GameRoom {
   }
 
   private startGame() {
+    this.pendingEvent = true;
     this.matchSeq += 1;
     this.phase = "playing";
     this.countdownSec = null;
@@ -305,6 +339,7 @@ export class GameRoom {
   }
 
   private startBallFlight(fromX: number, fromY: number, targetPlayerId: string) {
+    this.pendingEvent = true;
     for (const p of this.players.values()) {
       p.hasBall = false;
     }
@@ -338,6 +373,7 @@ export class GameRoom {
       this.transferBallToRandomAlive();
       return;
     }
+    this.pendingEvent = true;
     target.hasBall = true;
     this.ballHolderId = target.id;
     this.flightPressureSec = this.holdTimeSec;
@@ -395,12 +431,12 @@ export class GameRoom {
           this.startGame();
         }
       }
-      this.onBroadcast();
+      this.broadcast();
       return;
     }
 
     if (this.phase !== "playing") {
-      this.onBroadcast();
+      this.broadcast();
       return;
     }
 
@@ -409,7 +445,7 @@ export class GameRoom {
       if (this.deathPauseMs <= 0) {
         this.finishDeathPause();
       }
-      this.onBroadcast();
+      this.broadcast();
       return;
     }
 
@@ -442,7 +478,7 @@ export class GameRoom {
     if (this.deathPauseMs <= 0) {
       this.checkWin();
     }
-    this.onBroadcast();
+    this.broadcast();
   }
 
   private movePlayer(p: InternalPlayer, dt: number) {
@@ -674,6 +710,7 @@ export class GameRoom {
 
     if (!hit) return;
 
+    this.pendingEvent = true;
     const fromX = holder.x;
     const fromY = holder.y - GAME.BALL_HOVER_OFFSET;
     holder.alive = false;
@@ -724,6 +761,7 @@ export class GameRoom {
     const alive = [...this.players.values()].filter((p) => p.alive);
     if (this.phase !== "playing") return;
     if (alive.length === 1) {
+      this.pendingEvent = true;
       this.phase = "ended";
       this.winnerId = alive[0].id;
       this.winnerName = alive[0].name;
@@ -732,6 +770,7 @@ export class GameRoom {
       for (const p of this.players.values()) p.hasBall = false;
       this.scheduleLobbyReset();
     } else if (alive.length === 0) {
+      this.pendingEvent = true;
       this.phase = "ended";
       this.winnerId = null;
       this.winnerName = null;
@@ -744,7 +783,7 @@ export class GameRoom {
     this.endResetTimer = setTimeout(() => {
       this.endResetTimer = null;
       this.resetLobby();
-      this.onBroadcast();
+      this.onBroadcast(true);
     }, GAME.LOBBY_RESET_MS);
   }
 

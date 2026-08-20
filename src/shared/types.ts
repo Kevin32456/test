@@ -7,8 +7,6 @@ export interface PlayerState {
   color: string;
   x: number;
   y: number;
-  targetX: number;
-  targetY: number;
   alive: boolean;
   hasBall: boolean;
   blinkCooldownMs: number;
@@ -23,6 +21,9 @@ export interface DogState {
   vy: number;
 }
 
+/** 狗的可視狀態；速度與慣性只有伺服器需要，不上線路 */
+export type DogWire = Pick<DogState, "x" | "y" | "angle">;
+
 export interface BallState {
   x: number;
   y: number;
@@ -34,7 +35,7 @@ export interface GameSnapshot {
   phase: GamePhase;
   matchSeq: number;
   players: PlayerState[];
-  dog: DogState;
+  dog: DogWire;
   ball: BallState;
   ballHolderId: string | null;
   holdTimeSec: number;
