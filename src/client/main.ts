@@ -14,6 +14,7 @@ import {
 import "./fonts.css";
 import "./style.css";
 import { loadPixelFont } from "./loadPixelFont";
+import { characterDataURL } from "./pixelArt";
 
 let phaserGame: Phaser.Game | null = null;
 let selectedCharacterId = CHARACTERS[0]!.id;
@@ -22,11 +23,21 @@ let hasJoined = false;
 const overlay = document.createElement("div");
 overlay.className = "overlay-panel";
 overlay.innerHTML = `
+  <div class="petals" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
   <div class="lobby-card lobby-card-wide">
-    <h1>甩狗 Shuai Gou</h1>
-    <p>選擇角色後加入房間，每個角色只能被一位玩家使用。</p>
+    <header class="lobby-header">
+      <span class="lobby-seal">犬</span>
+      <div class="lobby-title">
+        <h1>甩狗</h1>
+        <p class="lobby-subtitle">SHUAI GOU — 熱土豆 × 鬼抓人</p>
+      </div>
+    </header>
+    <p class="lobby-desc">選擇角色後加入房間，每位角色僅限一人。</p>
+    <label class="field-label" for="name-input">暱稱</label>
     <input id="name-input" maxlength="16" placeholder="輸入暱稱" value="玩家" />
-    <p class="section-label">選擇角色</p>
+    <p class="section-label"><span>選擇角色</span></p>
     <div id="character-grid" class="character-grid"></div>
     <ul id="player-list" class="player-list"></ul>
     <p id="lobby-status">連線中…</p>
@@ -47,7 +58,8 @@ function buildCharacterGrid() {
   characterGrid.innerHTML = CHARACTERS.map(
     (c) => `
     <button type="button" class="char-card" data-id="${c.id}" aria-label="${c.name}">
-      <img src="${c.asset}" alt="${c.name}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'char-preview',style:'background:${c.color}'}))" />
+      <span class="char-check">✓</span>
+      <img src="${characterDataURL(c.id)}" alt="${c.name}" />
       <span class="char-name">${c.name}</span>
       <span class="char-status"></span>
     </button>`,
@@ -126,7 +138,7 @@ function renderLobby(snapshot: GameSnapshot) {
   playerList.innerHTML = snapshot.players
     .map((p) => {
       const char = CHARACTERS.find((c) => c.id === p.characterId);
-      return `<li><span class="player-char-icon" style="background:${char?.color ?? "#666"}"></span> ${p.name} · ${char?.name ?? ""}${p.id === playerId ? "（你）" : ""}</li>`;
+      return `<li><img class="player-char-icon" src="${characterDataURL(p.characterId, 3)}" alt="" /> ${p.name} · ${char?.name ?? ""}${p.id === playerId ? "（你）" : ""}</li>`;
     })
     .join("");
 
@@ -164,7 +176,8 @@ function ensurePhaser() {
       parent: "app",
       width: GAME.ARENA_WIDTH,
       height: GAME.ARENA_HEIGHT,
-      backgroundColor: "#141922",
+      backgroundColor: "#171a26",
+      pixelArt: true,
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,

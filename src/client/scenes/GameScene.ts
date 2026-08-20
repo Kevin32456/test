@@ -11,6 +11,7 @@ import {
   sendAction,
   subscribeState,
 } from "../network";
+import { characterCanvas, dogCanvas } from "../pixelArt";
 
 interface DisplayPoint {
   x: number;
@@ -64,12 +65,20 @@ export class GameScene extends Phaser.Scene {
     Sfx.unlock();
     this.drawArena();
 
+    for (const c of CHARACTERS) {
+      const key = `char-${c.id}`;
+      if (!this.textures.exists(key)) {
+        this.textures.addCanvas(key, characterCanvas(c.id, 4));
+      }
+    }
+    if (!this.textures.exists("dog-collie")) {
+      this.textures.addCanvas("dog-collie", dogCanvas(4));
+    }
+
     this.dogSprite = this.add.container(0, 0);
-    const dogBody = this.add.circle(0, 0, GAME.DOG_RADIUS, 0xe53935);
-    const dogEar = this.add.triangle(0, -8, 0, -18, -10, 4, 10, 4, 0xff7043);
-    const dogTail = this.add.rectangle(-16, 4, 14, 5, 0xffab91);
-    dogTail.setAngle(-20);
-    this.dogSprite.add([dogTail, dogBody, dogEar]);
+    const dogImage = this.add.image(0, 0, "dog-collie");
+    dogImage.setDisplaySize(56, 32);
+    this.dogSprite.add(dogImage);
 
     this.ballGlow = this.add
       .circle(0, 0, GAME.BALL_RADIUS + 6, 0xffeb3b, 0.22)
@@ -376,8 +385,8 @@ export class GameScene extends Phaser.Scene {
         let avatar: Phaser.GameObjects.Image | Phaser.GameObjects.Arc;
         if (this.textures.exists(textureKey)) {
           avatar = this.add.image(0, 2, textureKey);
-          avatar.setDisplaySize(44, 58);
-          avatar.setOrigin(0.5, 0.85);
+          avatar.setDisplaySize(39, 52);
+          avatar.setOrigin(0.5, 0.8);
         } else {
           avatar = this.add.circle(
             0,
