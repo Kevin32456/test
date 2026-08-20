@@ -15,8 +15,18 @@ export const GAME = {
   DOG_MAX_TURN_RATE: 2.8,
   TICK_HZ: 20,
   COUNTDOWN_SECONDS: 3,
+  LOBBY_RESET_MS: 5000,
+  BALL_RADIUS: 8,
+  BALL_HOVER_OFFSET: 28,
+  BALL_FLIGHT_SPEED: 540,
+  BALL_ARRIVE_DIST: 14,
   COLORS: ["#4fc3f7", "#81c784", "#ffb74d", "#e57373"],
 } as const;
+
+export const arenaCenter = () => ({
+  x: GAME.ARENA_WIDTH / 2,
+  y: GAME.ARENA_HEIGHT / 2,
+});
 
 export const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));

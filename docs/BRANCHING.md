@@ -64,3 +64,4 @@ git reset --hard <commit-sha>   # 僅在確定要丟棄後續提交時使用
 |------|------|------|
 | `cursor/design-docs-baseline-a9d0` | 已合併 | GDD、交接文件、分支規範 |
 | `cursor/web-prototype-4p-a9d0` | 已推送 | 網頁 Phaser + Socket.io 4 人連線原型 |
+| `cursor/fix-round2-and-ball-anim-a9d0` | 開發中 | 修第二局卡死 + 球路動畫 |

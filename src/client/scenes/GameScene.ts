@@ -1,15 +1,25 @@
 import Phaser from "phaser";
 import { GAME } from "@shared/constants";
 import type { GameSnapshot, PlayerState } from "@shared/types";
-import { getLatestSnapshot, getPlayerId, getSocket, sendAction } from "../network";
+import {
+  getLatestSnapshot,
+  getPlayerId,
+  sendAction,
+  subscribeState,
+} from "../network";
 
 export class GameScene extends Phaser.Scene {
   private playerSprites = new Map<string, Phaser.GameObjects.Container>();
   private playerLabels = new Map<string, Phaser.GameObjects.Text>();
   private dogSprite!: Phaser.GameObjects.Container;
   private ballSprite!: Phaser.GameObjects.Arc;
+  private ballGlow!: Phaser.GameObjects.Arc;
   private hud!: Phaser.GameObjects.Text;
   private endedBanner: Phaser.GameObjects.Text | null = null;
+  private unsubState: (() => void) | null = null;
+  private lastMatchSeq = 0;
+  private displayBall = { x: 0, y: 0 };
+  private snapshotBall = { x: 0, y: 0 };
 
   constructor() {
     super("GameScene");
@@ -24,7 +34,13 @@ export class GameScene extends Phaser.Scene {
     dogTail.setAngle(-20);
     this.dogSprite.add([dogTail, dogBody, dogEar]);
 
-    this.ballSprite = this.add.circle(0, 0, 8, 0xffeb3b).setStrokeStyle(2, 0xf57f17);
+    this.ballGlow = this.add
+      .circle(0, 0, GAME.BALL_RADIUS + 6, 0xffeb3b, 0.18)
+      .setDepth(40);
+    this.ballSprite = this.add
+      .circle(0, 0, GAME.BALL_RADIUS, 0xffeb3b)
+      .setStrokeStyle(2, 0xf57f17)
+      .setDepth(41);
 
     this.hud = this.add
       .text(12, 12, "", {
@@ -51,12 +67,38 @@ export class GameScene extends Phaser.Scene {
       sendAction({ type: "blink", x: pointer.worldX, y: pointer.worldY });
     });
 
-    getSocket().on("state", (snapshot: GameSnapshot) => {
+    this.unsubState = subscribeState((snapshot) => {
       this.applySnapshot(snapshot);
     });
 
     const initial = getLatestSnapshot();
     if (initial) this.applySnapshot(initial);
+  }
+
+  shutdown() {
+    this.unsubState?.();
+    this.unsubState = null;
+  }
+
+  update(_time: number, delta: number) {
+    const snapshot = getLatestSnapshot();
+    if (!snapshot || snapshot.phase !== "playing") return;
+
+    const lerp = snapshot.ball.inFlight
+      ? Math.min(1, delta / 50)
+      : Math.min(1, delta / 80);
+    this.displayBall.x = Phaser.Math.Linear(
+      this.displayBall.x,
+      this.snapshotBall.x,
+      lerp,
+    );
+    this.displayBall.y = Phaser.Math.Linear(
+      this.displayBall.y,
+      this.snapshotBall.y,
+      lerp,
+    );
+    this.ballSprite.setPosition(this.displayBall.x, this.displayBall.y);
+    this.ballGlow.setPosition(this.displayBall.x, this.displayBall.y);
   }
 
   private drawArena() {
@@ -76,11 +118,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleRightClick(wx: number, wy: number) {
+    const snapshot = getLatestSnapshot();
+    if (!snapshot || snapshot.phase !== "playing") return;
+
     const me = this.getMe();
     if (!me || !me.alive) return;
 
-    if (me.hasBall) {
-      const target = this.findPlayerAt(wx, wy, getLatestSnapshot()?.players ?? []);
+    if (me.hasBall && !snapshot.ball.inFlight) {
+      const target = this.findPlayerAt(wx, wy, snapshot.players);
       if (target && target.alive && target.id !== me.id) {
         sendAction({ type: "pass", targetId: target.id });
         return;
@@ -112,7 +157,21 @@ export class GameScene extends Phaser.Scene {
     return getLatestSnapshot()?.players.find((p) => p.id === getPlayerId());
   }
 
+  private resetRoundVisuals() {
+    if (this.endedBanner) {
+      this.endedBanner.destroy();
+      this.endedBanner = null;
+    }
+  }
+
   private applySnapshot(snapshot: GameSnapshot) {
+    if (snapshot.matchSeq !== this.lastMatchSeq) {
+      this.lastMatchSeq = snapshot.matchSeq;
+      this.resetRoundVisuals();
+      this.displayBall.x = snapshot.ball.x;
+      this.displayBall.y = snapshot.ball.y;
+    }
+
     for (const p of snapshot.players) {
       let container = this.playerSprites.get(p.id);
       if (!container) {
@@ -154,27 +213,41 @@ export class GameScene extends Phaser.Scene {
     this.dogSprite.setPosition(snapshot.dog.x, snapshot.dog.y);
     this.dogSprite.setRotation(snapshot.dog.angle);
 
-    const holder = snapshot.players.find((p) => p.hasBall && p.alive);
-    if (holder) {
-      this.ballSprite.setVisible(true);
-      this.ballSprite.setPosition(holder.x, holder.y - 28);
-    } else {
-      this.ballSprite.setVisible(false);
+    this.snapshotBall.x = snapshot.ball.x;
+    this.snapshotBall.y = snapshot.ball.y;
+
+    const showBall =
+      snapshot.phase === "playing" &&
+      (snapshot.ball.inFlight || snapshot.ballHolderId !== null);
+
+    this.ballSprite.setVisible(showBall);
+    this.ballGlow.setVisible(showBall);
+
+    if (showBall) {
+      this.ballSprite.setPosition(this.displayBall.x, this.displayBall.y);
+      this.ballGlow.setPosition(this.displayBall.x, this.displayBall.y);
     }
 
     const me = this.getMe();
     const aliveCount = snapshot.players.filter((p) => p.alive).length;
     const cd = me ? Math.ceil(me.blinkCooldownMs / 1000) : 0;
 
+    let ballHint = "";
+    if (snapshot.ball.inFlight) {
+      ballHint = "球飛行中…";
+    } else if (me?.hasBall) {
+      ballHint = "你持球：右鍵點人傳球";
+    } else if (me?.alive) {
+      ballHint = `Blink <Space> 朝向滑鼠 · CD ${cd}s`;
+    } else {
+      ballHint = "你已出局（觀戰）";
+    }
+
     this.hud.setText(
       [
         `存活 ${aliveCount}/${snapshot.players.length}`,
         `持球時間 ${snapshot.holdTimeSec.toFixed(1)}s`,
-        me?.hasBall
-          ? "你持球：右鍵點人傳球"
-          : me?.alive
-            ? `Blink <Space> 朝向滑鼠 · CD ${cd}s`
-            : "你已出局（觀戰）",
+        ballHint,
         "右鍵點地移動",
       ].join("\n"),
     );

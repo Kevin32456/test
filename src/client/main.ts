@@ -8,10 +8,10 @@ import {
   latestSnapshot,
   playerId,
   sendAction,
+  subscribeState,
 } from "./network";
 import "./style.css";
 
-let gameBooted = false;
 let phaserGame: Phaser.Game | null = null;
 
 const overlay = document.createElement("div");
@@ -35,6 +35,14 @@ const lobbyStatus = overlay.querySelector("#lobby-status") as HTMLParagraphEleme
 const joinBtn = overlay.querySelector("#join-btn") as HTMLButtonElement;
 const startBtn = overlay.querySelector("#start-btn") as HTMLButtonElement;
 
+function showOverlay() {
+  overlay.style.display = "flex";
+}
+
+function hideOverlay() {
+  overlay.style.display = "none";
+}
+
 function renderLobby(snapshot: GameSnapshot) {
   playerList.innerHTML = snapshot.players
     .map(
@@ -52,16 +60,21 @@ function renderLobby(snapshot: GameSnapshot) {
     startBtn.style.display = "none";
   } else if (snapshot.phase === "ended") {
     lobbyStatus.textContent = snapshot.winnerName
-      ? `${snapshot.winnerName} 獲勝！即將回到大廳…`
-      : "本局結束，即將回到大廳…";
+      ? `${snapshot.winnerName} 獲勝！${Math.ceil(GAME.LOBBY_RESET_MS / 1000)} 秒後回到大廳…`
+      : `本局結束，${Math.ceil(GAME.LOBBY_RESET_MS / 1000)} 秒後回到大廳…`;
     startBtn.style.display = "none";
   }
 }
 
-function bootGame() {
-  if (gameBooted) return;
-  gameBooted = true;
-  overlay.remove();
+function ensurePhaser() {
+  if (phaserGame) {
+    const scene = phaserGame.scene.getScene("GameScene");
+    if (!scene || !scene.sys.isActive()) {
+      phaserGame.scene.start("GameScene");
+    }
+    return;
+  }
+
   phaserGame = new Phaser.Game({
     type: Phaser.AUTO,
     parent: "app",
@@ -76,14 +89,16 @@ function bootGame() {
   });
 }
 
-function returnToLobby() {
-  if (phaserGame) {
-    phaserGame.destroy(true);
-    phaserGame = null;
+function handlePhase(snapshot: GameSnapshot) {
+  if (snapshot.phase === "lobby" || snapshot.phase === "ended") {
+    showOverlay();
+    renderLobby(snapshot);
+    return;
   }
-  gameBooted = false;
-  if (!overlay.isConnected) {
-    document.getElementById("app")!.appendChild(overlay);
+
+  if (snapshot.phase === "countdown" || snapshot.phase === "playing") {
+    hideOverlay();
+    ensurePhaser();
   }
 }
 
@@ -98,19 +113,12 @@ bindNetworkHandlers({
   onJoined: (payload) => {
     renderLobby(payload.snapshot);
     startBtn.style.display = "block";
+    handlePhase(payload.snapshot);
   },
-  onState: (snapshot) => {
-    if (!gameBooted) {
-      renderLobby(snapshot);
-      if (snapshot.phase === "countdown" || snapshot.phase === "playing") {
-        bootGame();
-      }
-    }
-    if (snapshot.phase === "lobby" && gameBooted) {
-      returnToLobby();
-      renderLobby(snapshot);
-    }
-  },
+});
+
+subscribeState((snapshot) => {
+  handlePhase(snapshot);
 });
 
 joinBtn.addEventListener("click", () => {
@@ -119,14 +127,6 @@ joinBtn.addEventListener("click", () => {
     if (!ok) {
       lobbyStatus.textContent = "房間已滿或無法加入，請稍後再試。";
       joinBtn.disabled = false;
-      return;
-    }
-    if (
-      latestSnapshot &&
-      (latestSnapshot.phase === "countdown" ||
-        latestSnapshot.phase === "playing")
-    ) {
-      bootGame();
     }
   });
 });

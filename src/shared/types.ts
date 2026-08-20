@@ -20,10 +20,19 @@ export interface DogState {
   speed: number;
 }
 
+export interface BallState {
+  x: number;
+  y: number;
+  inFlight: boolean;
+  targetPlayerId: string | null;
+}
+
 export interface GameSnapshot {
   phase: GamePhase;
+  matchSeq: number;
   players: PlayerState[];
   dog: DogState;
+  ball: BallState;
   ballHolderId: string | null;
   holdTimeSec: number;
   countdownSec: number | null;
