@@ -291,20 +291,14 @@ export class GameRoom {
     }
     target.hasBall = true;
     this.ballHolderId = target.id;
-    this.holdTimeSec = 0;
+    /** 傳球落地：延續飛行前的狗壓，不歸零 */
+    this.holdTimeSec = this.flightPressureSec;
     this.flightPressureSec = 0;
     this.ball.inFlight = false;
     this.ball.targetPlayerId = null;
     this.ball.x = target.x;
     this.ball.y = target.y - GAME.BALL_HOVER_OFFSET;
-    this.dog.angle = Math.atan2(
-      target.y - this.dog.y,
-      target.x - this.dog.x,
-    );
-    const landSpeed = GAME.DOG_BASE_SPEED * 0.6;
-    this.dog.vx = Math.cos(this.dog.angle) * landSpeed;
-    this.dog.vy = Math.sin(this.dog.angle) * landSpeed;
-    this.dog.speed = landSpeed;
+    // 保留狗當前滑動動量，不在接球瞬間減速
   }
 
   private updateBallFlight(dt: number) {
@@ -471,7 +465,7 @@ export class GameRoom {
     }
 
     let speed = Math.hypot(vx, vy);
-    const speedCap = targetSpeed * 1.12;
+    const speedCap = targetSpeed * 1.15;
     if (speed > speedCap) {
       const scale = speedCap / speed;
       vx *= scale;
