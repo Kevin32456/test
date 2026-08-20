@@ -3,11 +3,6 @@ import { Sfx } from "../audio/Sfx";
 import { expLerp, expLerpAngle } from "../interpolation";
 import { CHARACTERS, getCharacter } from "@shared/characters";
 import { GAME, arenaCenter } from "@shared/constants";
-import {
-  getControlMode,
-  subscribeControlMode,
-  type ControlMode,
-} from "@shared/controls";
 import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
 import type { GameSnapshot, PlayerState } from "@shared/types";
 import {
@@ -50,22 +45,11 @@ export class GameScene extends Phaser.Scene {
   private deathPauseBanner: Phaser.GameObjects.Text | null = null;
   private endedBanner: Phaser.GameObjects.Text | null = null;
   private unsubState: (() => void) | null = null;
-  private unsubControlMode: (() => void) | null = null;
   private prevSnapshot: GameSnapshot | null = null;
   private lastMatchSeq = 0;
   private lastCountdownBeep = -1;
   private displayBall = { x: 0, y: 0, tx: 0, ty: 0 };
   private pulseT = 0;
-  private controlMode: ControlMode = "mouse";
-  private wasdKeys!: {
-    W: Phaser.Input.Keyboard.Key;
-    A: Phaser.Input.Keyboard.Key;
-    S: Phaser.Input.Keyboard.Key;
-    D: Phaser.Input.Keyboard.Key;
-  };
-  private lastInputSentAt = 0;
-  private sentInputX = 0;
-  private sentInputY = 0;
 
   constructor() {
     super("GameScene");
@@ -79,7 +63,6 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     Sfx.unlock();
-    this.controlMode = getControlMode();
     this.drawArena();
 
     for (const c of CHARACTERS) {
@@ -123,9 +106,6 @@ export class GameScene extends Phaser.Scene {
       .setDepth(100);
 
     this.input.mouse?.disableContextMenu();
-    if (this.input.keyboard) {
-      this.wasdKeys = this.input.keyboard.addKeys("W,A,S,D") as GameScene["wasdKeys"];
-    }
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       Sfx.unlock();
@@ -144,10 +124,6 @@ export class GameScene extends Phaser.Scene {
       sendAction({ type: "blink", x: pointer.worldX, y: pointer.worldY });
     });
 
-    this.unsubControlMode = subscribeControlMode((mode) => {
-      this.applyControlMode(mode);
-    });
-
     this.unsubState = subscribeState((snapshot) => {
       this.applySnapshot(snapshot);
     });
@@ -159,23 +135,10 @@ export class GameScene extends Phaser.Scene {
   shutdown() {
     this.unsubState?.();
     this.unsubState = null;
-    this.unsubControlMode?.();
-    this.unsubControlMode = null;
     this.prevSnapshot = null;
   }
 
-  private applyControlMode(mode: ControlMode) {
-    if (mode === this.controlMode) return;
-    this.controlMode = mode;
-    // 切換模式後重送輸入：離開 WASD 要停下，回到 WASD 要重新同步按鍵。
-    this.sentInputX = Number.NaN;
-    this.sentInputY = Number.NaN;
-    if (mode === "mouse") {
-      sendAction({ type: "moveInput", x: 0, y: 0 });
-    }
-  }
-
-  update(time: number, delta: number) {
+  update(_time: number, delta: number) {
     this.pulseT += delta;
     const snapshot = getLatestSnapshot();
     if (!snapshot) return;
@@ -229,34 +192,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.drawThreatBar(snapshot);
-    this.sendWasdInput(time, snapshot);
-  }
-
-  private sendWasdInput(time: number, snapshot: GameSnapshot) {
-    if (this.controlMode !== "wasd" || snapshot.phase !== "playing") return;
-    if (snapshot.deathPauseMs > 0) {
-      // 停頓結束後強制重送當下按鍵狀態。
-      this.sentInputX = Number.NaN;
-      this.sentInputY = Number.NaN;
-      return;
-    }
-    const me = this.getMe();
-    if (!me?.alive) return;
-
-    let dx = 0;
-    let dy = 0;
-    if (this.wasdKeys?.W.isDown) dy -= 1;
-    if (this.wasdKeys?.S.isDown) dy += 1;
-    if (this.wasdKeys?.A.isDown) dx -= 1;
-    if (this.wasdKeys?.D.isDown) dx += 1;
-
-    if (time - this.lastInputSentAt < 50) return;
-    if (dx === this.sentInputX && dy === this.sentInputY) return;
-
-    sendAction({ type: "moveInput", x: dx, y: dy });
-    this.sentInputX = dx;
-    this.sentInputY = dy;
-    this.lastInputSentAt = time;
   }
 
   private drawThreatBar(snapshot: GameSnapshot) {
@@ -334,8 +269,6 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
-
-    if (this.controlMode !== "mouse") return;
 
     sendAction({ type: "move", x: wx, y: wy });
     this.showMoveMarker(wx, wy);
@@ -586,14 +519,7 @@ export class GameScene extends Phaser.Scene {
       ballHint = "觀戰中";
     }
 
-    let controlHint = "";
-    if (this.controlMode === "wasd") {
-      controlHint = me?.hasBall
-        ? "WASD 移動 · 右鍵傳球 · Space Blink"
-        : "WASD 移動 · Space Blink";
-    } else {
-      controlHint = "右鍵移動／傳球";
-    }
+    const controlHint = "右鍵移動／傳球 · Space Blink";
 
     this.hud.setText(
       [

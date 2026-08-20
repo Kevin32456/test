@@ -7,13 +7,13 @@ export const GAME = {
   ARENA_RADIUS: 420,
   PLAYER_RADIUS: 18,
   /** 玩家被狗命中的有效半徑；獨立於移動／邊界碰撞 */
-  PLAYER_HIT_RADIUS: 13,
+  PLAYER_HIT_RADIUS: 15,
   PLAYER_SPEED: 300,
   BLINK_DISTANCE: 160,
   BLINK_COOLDOWN_MS: 2800,
   DOG_RADIUS: 22,
   /** 狗造成擊殺的有效半徑；依 sprite 短軸調整 */
-  DOG_HIT_RADIUS: 16,
+  DOG_HIT_RADIUS: 18,
   DOG_BASE_SPEED: 135,
   DOG_ACCEL_PER_SEC: 46,
   /** HUD 壓力條滿格對應秒數（實際狗速與壓力無上限） */
@@ -48,7 +48,7 @@ export const GAME = {
   DOG_LATERAL_FRICTION: 0.10,
   /** 撞牆後速度保留比例 */
   DOG_WALL_SLIDE: 0.48,
-  /** 傳球接球後保留的狗壓力比例（飛行中壓力凍結，落地才結算） */
+  /** 傳球當下保留的狗壓力比例（飛行中壓力繼續累加） */
   DOG_PRESSURE_PASS_RETAIN: 0.85,
   TICK_HZ: 20,
   /** 客戶端插值平滑係數（越大越貼近伺服器） */

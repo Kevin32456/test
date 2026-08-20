@@ -293,9 +293,10 @@ export class GameRoom {
     const ids = [...this.players.keys()];
     const starter = ids[Math.floor(Math.random() * ids.length)]!;
     const c = arenaCenter();
+    this.holdTimeSec = 0;
     this.dog.x = c.x;
     this.dog.y = c.y;
-    this.dog.speed = 0;
+    this.dog.speed = GAME.DOG_BASE_SPEED;
     this.dog.vx = 0;
     this.dog.vy = 0;
     this.dog.angle = 0;
@@ -308,8 +309,10 @@ export class GameRoom {
       p.hasBall = false;
     }
     this.ballHolderId = null;
+    if (this.holdTimeSec > 0) {
+      this.holdTimeSec *= GAME.DOG_PRESSURE_PASS_RETAIN;
+    }
     this.flightPressureSec = this.holdTimeSec;
-    this.holdTimeSec = 0;
     this.ball = {
       x: fromX,
       y: fromY,
@@ -337,9 +340,7 @@ export class GameRoom {
     }
     target.hasBall = true;
     this.ballHolderId = target.id;
-    /** 傳球落地：依 DOG_PRESSURE_PASS_RETAIN 保留狗壓 */
-    this.holdTimeSec = this.flightPressureSec * GAME.DOG_PRESSURE_PASS_RETAIN;
-    this.flightPressureSec = 0;
+    this.flightPressureSec = this.holdTimeSec;
     this.ball.inFlight = false;
     this.ball.targetPlayerId = null;
     this.ball.x = target.x;
@@ -421,6 +422,8 @@ export class GameRoom {
     }
 
     if (this.ball.inFlight) {
+      this.holdTimeSec += dt;
+      this.flightPressureSec = this.holdTimeSec;
       this.updateBallFlight(dt);
       this.updateDogToward(dt, this.ball.x, this.ball.y);
     } else if (this.ballHolderId) {
@@ -429,6 +432,7 @@ export class GameRoom {
         this.ball.x = holder.x;
         this.ball.y = holder.y - GAME.BALL_HOVER_OFFSET;
         this.holdTimeSec += dt;
+        this.flightPressureSec = this.holdTimeSec;
         const chase = this.getHolderChasePoint(holder);
         this.updateDogToward(dt, chase.x, chase.y);
         this.checkDogKill();
@@ -527,7 +531,7 @@ export class GameRoom {
   }
 
   private getDogPressureSec(): number {
-    return this.ball.inFlight ? this.flightPressureSec : this.holdTimeSec;
+    return this.holdTimeSec;
   }
 
   private updateDogToward(dt: number, chaseX: number, chaseY: number) {
@@ -552,8 +556,9 @@ export class GameRoom {
       GAME.DOG_ORBIT_TURN_RATE +
       (GAME.DOG_TURN_RATE - GAME.DOG_ORBIT_TURN_RATE) * recovery;
     const forwardGrip =
-      GAME.DOG_ORBIT_FORWARD_GRIP +
-      (GAME.DOG_FORWARD_GRIP - GAME.DOG_ORBIT_FORWARD_GRIP) * recovery;
+      (GAME.DOG_ORBIT_FORWARD_GRIP +
+        (GAME.DOG_FORWARD_GRIP - GAME.DOG_ORBIT_FORWARD_GRIP) * recovery) *
+      (Math.hypot(this.dog.vx, this.dog.vy) < targetSpeed * 0.45 ? 2.4 : 1);
 
     let vx = this.dog.vx;
     let vy = this.dog.vy;

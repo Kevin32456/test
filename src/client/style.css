@@ -237,40 +237,6 @@ body {
   background: var(--line);
 }
 
-/* ===== 操控模式 ===== */
-
-.control-mode-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.control-mode-btn {
-  padding: 10px 8px;
-  border: 2px solid var(--line);
-  background: var(--indigo);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
-}
-
-.control-mode-btn.selected {
-  border-color: var(--gold);
-  background: #2a2331;
-  color: var(--gold);
-  box-shadow:
-    0 0 0 1px var(--gold),
-    3px 3px 0 rgba(0, 0, 0, 0.4);
-}
-
-.control-mode-btn:active {
-  transform: translate(1px, 1px);
-}
-
 /* ===== 選角卡 ===== */
 
 .character-grid {
