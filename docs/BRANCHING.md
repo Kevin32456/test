@@ -63,4 +63,4 @@ git reset --hard <commit-sha>   # 僅在確定要丟棄後續提交時使用
 | 分支 | 狀態 | 說明 |
 |------|------|------|
 | `cursor/design-docs-baseline-a9d0` | 已合併 | GDD、交接文件、分支規範 |
-| `cursor/web-prototype-4p-a9d0` | 開發中 | 網頁 Phaser + 4 人連線原型 |
+| `cursor/web-prototype-4p-a9d0` | 已推送 | 網頁 Phaser + Socket.io 4 人連線原型 |
