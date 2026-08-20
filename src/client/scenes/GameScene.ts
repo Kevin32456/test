@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { Sfx } from "../audio/Sfx";
 import { expLerp, expLerpAngle } from "../interpolation";
+import { CHARACTERS, getCharacter } from "@shared/characters";
 import { GAME } from "@shared/constants";
 import type { GameSnapshot, PlayerState } from "@shared/types";
 import {
@@ -50,6 +51,12 @@ export class GameScene extends Phaser.Scene {
 
   constructor() {
     super("GameScene");
+  }
+
+  preload() {
+    for (const c of CHARACTERS) {
+      this.load.image(`char-${c.id}`, c.asset);
+    }
   }
 
   create() {
@@ -134,7 +141,7 @@ export class GameScene extends Phaser.Scene {
       const label = this.playerLabels.get(id);
       const ring = this.holderRings.get(id);
       if (container) container.setPosition(dp.x, dp.y);
-      if (label) label.setPosition(dp.x, dp.y - 34);
+      if (label) label.setPosition(dp.x, dp.y - 42);
       if (ring) {
         ring.setPosition(dp.x, dp.y);
         const holder = snapshot.players.find((p) => p.id === id);
@@ -367,25 +374,33 @@ export class GameScene extends Phaser.Scene {
       let container = this.playerSprites.get(p.id);
       if (!container) {
         container = this.add.container(p.x, p.y);
-        const body = this.add.circle(
-          0,
-          0,
-          GAME.PLAYER_RADIUS,
-          Phaser.Display.Color.HexStringToColor(p.color).color,
-        );
-        body.setStrokeStyle(2, 0xffffff, 0.35);
-        container.add(body);
-        container.setData("body", body);
+        const char = getCharacter(p.characterId);
+        const textureKey = `char-${p.characterId}`;
+        let avatar: Phaser.GameObjects.Image | Phaser.GameObjects.Arc;
+        if (this.textures.exists(textureKey)) {
+          avatar = this.add.image(0, 2, textureKey);
+          avatar.setDisplaySize(44, 58);
+          avatar.setOrigin(0.5, 0.85);
+        } else {
+          avatar = this.add.circle(
+            0,
+            0,
+            GAME.PLAYER_RADIUS,
+            Phaser.Display.Color.HexStringToColor(char?.color ?? p.color).color,
+          );
+        }
+        container.add(avatar);
+        container.setData("avatar", avatar);
         this.playerSprites.set(p.id, container);
 
         const ring = this.add
-          .circle(0, 0, GAME.PLAYER_RADIUS + 10, 0x000000, 0)
+          .circle(0, 0, GAME.PLAYER_RADIUS + 14, 0x000000, 0)
           .setStrokeStyle(3, 0xffeb3b, 0.9)
           .setVisible(false);
         this.holderRings.set(p.id, ring);
 
         const label = this.add
-          .text(0, -34, p.name, {
+          .text(0, -42, p.name, {
             fontFamily: "Segoe UI, Noto Sans TC, sans-serif",
             fontSize: "13px",
             color: "#ffffff",
@@ -395,11 +410,6 @@ export class GameScene extends Phaser.Scene {
       }
 
       container.setAlpha(p.alive ? 1 : 0.32);
-      const body = container.getData("body") as Phaser.GameObjects.Arc;
-      body.setFillStyle(
-        Phaser.Display.Color.HexStringToColor(p.color).color,
-        p.alive ? 1 : 0.28,
-      );
 
       const label = this.playerLabels.get(p.id)!;
       label.setText(p.name + (p.id === getPlayerId() ? "（你）" : ""));

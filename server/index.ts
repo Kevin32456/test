@@ -32,10 +32,14 @@ if (isProd) {
 }
 
 io.on("connection", (socket) => {
-  socket.on("join", (payload: JoinPayload, ack?: (ok: boolean) => void) => {
-    const ok = room.addPlayer(socket.id, payload?.name ?? "");
+  socket.on("join", (payload: JoinPayload, ack?: (ok: boolean, reason?: string) => void) => {
+    const ok = room.addPlayer(
+      socket.id,
+      payload?.name ?? "",
+      payload?.characterId ?? "",
+    );
     if (!ok) {
-      ack?.(false);
+      ack?.(false, "room_full_or_character_taken");
       return;
     }
     ack?.(true);

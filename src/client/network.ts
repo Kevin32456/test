@@ -53,6 +53,10 @@ export function bindNetworkHandlers(handlers: {
   });
 }
 
-export function joinRoom(name: string, ack: (ok: boolean) => void) {
-  socket.emit("join", { name }, ack);
+export function joinRoom(
+  name: string,
+  characterId: string,
+  ack: (ok: boolean, reason?: string) => void,
+) {
+  socket.emit("join", { name, characterId }, ack);
 }

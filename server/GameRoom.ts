@@ -4,6 +4,10 @@ import {
   clamp,
   distance,
 } from "../src/shared/constants.js";
+import {
+  getCharacter,
+  isValidCharacterId,
+} from "../src/shared/characters.js";
 import type {
   BallState,
   ClientAction,
@@ -15,6 +19,7 @@ import type {
 interface InternalPlayer {
   id: string;
   name: string;
+  characterId: string;
   color: string;
   x: number;
   y: number;
@@ -52,16 +57,20 @@ export class GameRoom {
     this.onBroadcast = onBroadcast;
   }
 
-  addPlayer(id: string, name: string): boolean {
+  addPlayer(id: string, name: string, characterId: string): boolean {
     if (this.players.size >= GAME.MAX_PLAYERS) return false;
     if (this.phase !== "lobby" && this.phase !== "ended") return false;
+    if (!isValidCharacterId(characterId)) return false;
+    if (!this.isCharacterAvailable(characterId)) return false;
 
     const index = this.players.size;
     const spawn = this.spawnPoint(index);
+    const char = getCharacter(characterId)!;
     this.players.set(id, {
       id,
       name: name.slice(0, 16) || `玩家${index + 1}`,
-      color: GAME.COLORS[index % GAME.COLORS.length],
+      characterId,
+      color: char.color,
       x: spawn.x,
       y: spawn.y,
       targetX: spawn.x,
@@ -111,6 +120,17 @@ export class GameRoom {
       ) {
         this.beginCountdown();
       }
+      return;
+    }
+
+    if (action.type === "selectCharacter") {
+      if (this.phase !== "lobby" && this.phase !== "ended") return;
+      if (!isValidCharacterId(action.characterId)) return;
+      if (!this.isCharacterAvailable(action.characterId, id)) return;
+      const char = getCharacter(action.characterId)!;
+      player.characterId = action.characterId;
+      player.color = char.color;
+      this.onBroadcast();
       return;
     }
 
@@ -564,6 +584,14 @@ export class GameRoom {
       this.resetLobby();
       this.onBroadcast();
     }, GAME.LOBBY_RESET_MS);
+  }
+
+  private isCharacterAvailable(characterId: string, exceptId?: string): boolean {
+    for (const p of this.players.values()) {
+      if (p.id === exceptId) continue;
+      if (p.characterId === characterId) return false;
+    }
+    return true;
   }
 
   private spawnPoint(index: number) {

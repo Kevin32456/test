@@ -3,6 +3,7 @@ export type GamePhase = "lobby" | "countdown" | "playing" | "ended";
 export interface PlayerState {
   id: string;
   name: string;
+  characterId: string;
   color: string;
   x: number;
   y: number;
@@ -49,10 +50,12 @@ export type ClientAction =
   | { type: "move"; x: number; y: number }
   | { type: "pass"; targetId: string }
   | { type: "blink"; x: number; y: number }
+  | { type: "selectCharacter"; characterId: string }
   | { type: "start" };
 
 export interface JoinPayload {
   name: string;
+  characterId: string;
 }
 
 export interface JoinedPayload {
