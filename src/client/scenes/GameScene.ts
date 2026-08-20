@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import { Sfx } from "../audio/Sfx";
 import { expLerp, expLerpAngle } from "../interpolation";
 import { CHARACTERS, getCharacter } from "@shared/characters";
-import { GAME } from "@shared/constants";
+import { GAME, arenaCenter } from "@shared/constants";
+import { getControlMode, type ControlMode } from "@shared/controls";
 import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
 import type { GameSnapshot, PlayerState } from "@shared/types";
 import {
@@ -11,6 +12,7 @@ import {
   sendAction,
   subscribeState,
 } from "../network";
+import { characterCanvas, dogCanvas } from "../pixelArt";
 
 interface DisplayPoint {
   x: number;
@@ -49,6 +51,16 @@ export class GameScene extends Phaser.Scene {
   private lastCountdownBeep = -1;
   private displayBall = { x: 0, y: 0, tx: 0, ty: 0 };
   private pulseT = 0;
+  private controlMode: ControlMode = "mouse";
+  private wasdKeys!: {
+    W: Phaser.Input.Keyboard.Key;
+    A: Phaser.Input.Keyboard.Key;
+    S: Phaser.Input.Keyboard.Key;
+    D: Phaser.Input.Keyboard.Key;
+  };
+  private lastInputSentAt = 0;
+  private sentInputX = 0;
+  private sentInputY = 0;
 
   constructor() {
     super("GameScene");
@@ -62,14 +74,23 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     Sfx.unlock();
+    this.controlMode = getControlMode();
     this.drawArena();
 
+    for (const c of CHARACTERS) {
+      const key = `char-${c.id}`;
+      if (!this.textures.exists(key)) {
+        this.textures.addCanvas(key, characterCanvas(c.id, 4));
+      }
+    }
+    if (!this.textures.exists("dog-collie")) {
+      this.textures.addCanvas("dog-collie", dogCanvas(4));
+    }
+
     this.dogSprite = this.add.container(0, 0);
-    const dogBody = this.add.circle(0, 0, GAME.DOG_RADIUS, 0xe53935);
-    const dogEar = this.add.triangle(0, -8, 0, -18, -10, 4, 10, 4, 0xff7043);
-    const dogTail = this.add.rectangle(-16, 4, 14, 5, 0xffab91);
-    dogTail.setAngle(-20);
-    this.dogSprite.add([dogTail, dogBody, dogEar]);
+    const dogImage = this.add.image(0, 0, "dog-collie");
+    dogImage.setDisplaySize(56, 32);
+    this.dogSprite.add(dogImage);
 
     this.ballGlow = this.add
       .circle(0, 0, GAME.BALL_RADIUS + 6, 0xffeb3b, 0.22)
@@ -97,6 +118,10 @@ export class GameScene extends Phaser.Scene {
       .setDepth(100);
 
     this.input.mouse?.disableContextMenu();
+    if (this.input.keyboard) {
+      this.wasdKeys = this.input.keyboard.addKeys("W,A,S,D") as GameScene["wasdKeys"];
+    }
+
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       Sfx.unlock();
       if (pointer.button !== 2) return;
@@ -126,7 +151,7 @@ export class GameScene extends Phaser.Scene {
     this.prevSnapshot = null;
   }
 
-  update(_time: number, delta: number) {
+  update(time: number, delta: number) {
     this.pulseT += delta;
     const snapshot = getLatestSnapshot();
     if (!snapshot) return;
@@ -180,6 +205,28 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.drawThreatBar(snapshot);
+    this.sendWasdInput(time, snapshot);
+  }
+
+  private sendWasdInput(time: number, snapshot: GameSnapshot) {
+    if (this.controlMode !== "wasd" || snapshot.phase !== "playing") return;
+    const me = this.getMe();
+    if (!me?.alive) return;
+
+    let dx = 0;
+    let dy = 0;
+    if (this.wasdKeys?.W.isDown) dy -= 1;
+    if (this.wasdKeys?.S.isDown) dy += 1;
+    if (this.wasdKeys?.A.isDown) dx -= 1;
+    if (this.wasdKeys?.D.isDown) dx += 1;
+
+    if (time - this.lastInputSentAt < 50) return;
+    if (dx === this.sentInputX && dy === this.sentInputY) return;
+
+    sendAction({ type: "moveInput", x: dx, y: dy });
+    this.sentInputX = dx;
+    this.sentInputY = dy;
+    this.lastInputSentAt = time;
   }
 
   private drawThreatBar(snapshot: GameSnapshot) {
@@ -205,17 +252,25 @@ export class GameScene extends Phaser.Scene {
 
   private drawArena() {
     const g = this.add.graphics();
-    g.fillStyle(0x1b2430, 1);
+    const c = arenaCenter();
+    const r = GAME.ARENA_RADIUS;
+
+    g.fillStyle(0x0f1118, 1);
     g.fillRect(0, 0, GAME.ARENA_WIDTH, GAME.ARENA_HEIGHT);
+
+    g.fillStyle(0x1b2430, 1);
+    g.fillCircle(c.x, c.y, r);
+
+    g.lineStyle(1, 0x253041, 0.35);
+    for (let i = 1; i <= 3; i++) {
+      g.strokeCircle(c.x, c.y, (r * i) / 3);
+    }
+
     g.lineStyle(4, 0x3d4f68, 1);
-    g.strokeRect(2, 2, GAME.ARENA_WIDTH - 4, GAME.ARENA_HEIGHT - 4);
-    g.lineStyle(1, 0x253041, 0.45);
-    for (let x = 0; x <= GAME.ARENA_WIDTH; x += 60) {
-      g.lineBetween(x, 0, x, GAME.ARENA_HEIGHT);
-    }
-    for (let y = 0; y <= GAME.ARENA_HEIGHT; y += 60) {
-      g.lineBetween(0, y, GAME.ARENA_WIDTH, y);
-    }
+    g.strokeCircle(c.x, c.y, r);
+
+    g.lineStyle(2, 0xe0503a, 0.35);
+    g.strokeCircle(c.x, c.y, r - 2);
   }
 
   private showMoveMarker(x: number, y: number) {
@@ -243,6 +298,8 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
+
+    if (this.controlMode !== "mouse") return;
 
     sendAction({ type: "move", x: wx, y: wy });
     this.showMoveMarker(wx, wy);
@@ -376,8 +433,8 @@ export class GameScene extends Phaser.Scene {
         let avatar: Phaser.GameObjects.Image | Phaser.GameObjects.Arc;
         if (this.textures.exists(textureKey)) {
           avatar = this.add.image(0, 2, textureKey);
-          avatar.setDisplaySize(44, 58);
-          avatar.setOrigin(0.5, 0.85);
+          avatar.setDisplaySize(39, 52);
+          avatar.setOrigin(0.5, 0.8);
         } else {
           avatar = this.add.circle(
             0,
@@ -447,12 +504,19 @@ export class GameScene extends Phaser.Scene {
       ballHint = "觀戰中";
     }
 
+    let controlHint = "";
+    if (this.controlMode === "wasd") {
+      controlHint = me?.hasBall ? "WASD 移動 · 右鍵傳球" : "WASD 移動 · Space Blink";
+    } else {
+      controlHint = "右鍵移動／傳球";
+    }
+
     this.hud.setText(
       [
         `存活 ${aliveCount}/${snapshot.players.length}`,
         `持球 ${snapshot.holdTimeSec.toFixed(1)}s · 狗壓 ${pressurePct}%`,
         ballHint,
-        "右鍵移動／傳球",
+        controlHint,
       ].join("\n"),
     );
 

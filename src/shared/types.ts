@@ -48,6 +48,7 @@ export interface GameSnapshot {
 
 export type ClientAction =
   | { type: "move"; x: number; y: number }
+  | { type: "moveInput"; x: number; y: number }
   | { type: "pass"; targetId: string }
   | { type: "blink"; x: number; y: number }
   | { type: "selectCharacter"; characterId: string }
