@@ -62,7 +62,8 @@ git reset --hard <commit-sha>   # 僅在確定要丟棄後續提交時使用
 
 | 分支 | 狀態 | 說明 |
 |------|------|------|
-| `main` | **v0.1.0** | 穩定可玩版 |
+| `main` | **v0.3.0** | 選角 + 狗追人平衡 |
+| `cursor/original-sprites-dog-speed-a9d0` | 已合併 | 狗速調整、移除 AI 角色圖 |
 | `cursor/design-docs-baseline-a9d0` | 已合併 | GDD、交接文件、分支規範 |
 | `cursor/web-prototype-4p-a9d0` | 已合併 | 網頁 4 人連線原型 |
 | `cursor/fix-round2-and-ball-anim-a9d0` | 已合併 | 第二局 + 球路動畫 |
