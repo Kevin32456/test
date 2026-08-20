@@ -8,9 +8,11 @@ export const GAME = {
   BLINK_DISTANCE: 140,
   BLINK_COOLDOWN_MS: 3000,
   DOG_RADIUS: 22,
-  DOG_BASE_SPEED: 160,
+  DOG_BASE_SPEED: 115,
   DOG_ACCEL_PER_SEC: 18,
   DOG_MAX_SPEED: 320,
+  /** 狗追擊點：玩家移動方向前方偏移（像素） */
+  DOG_CHASE_FRONT_OFFSET: 30,
   /** 弧度/秒 — 越小甩尾越明顯 */
   DOG_MAX_TURN_RATE: 2.8,
   TICK_HZ: 20,

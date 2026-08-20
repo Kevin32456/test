@@ -389,6 +389,35 @@ export class GameRoom {
     }
   }
 
+  private getHolderChasePoint(holder: InternalPlayer): { x: number; y: number } {
+    const moveDx = holder.targetX - holder.x;
+    const moveDy = holder.targetY - holder.y;
+    const moveLen = Math.hypot(moveDx, moveDy);
+
+    let dirX: number;
+    let dirY: number;
+
+    if (moveLen > 6) {
+      dirX = moveDx / moveLen;
+      dirY = moveDy / moveLen;
+    } else {
+      const towardHolderDx = holder.x - this.dog.x;
+      const towardHolderDy = holder.y - this.dog.y;
+      const towardHolderLen = Math.hypot(towardHolderDx, towardHolderDy);
+      if (towardHolderLen > 1) {
+        dirX = towardHolderDx / towardHolderLen;
+        dirY = towardHolderDy / towardHolderLen;
+      } else {
+        return { x: holder.x, y: holder.y };
+      }
+    }
+
+    return {
+      x: holder.x + dirX * GAME.DOG_CHASE_FRONT_OFFSET,
+      y: holder.y + dirY * GAME.DOG_CHASE_FRONT_OFFSET,
+    };
+  }
+
   private updateDog(dt: number) {
     const holder = this.ballHolderId
       ? this.players.get(this.ballHolderId)
@@ -401,8 +430,9 @@ export class GameRoom {
       GAME.DOG_MAX_SPEED,
     );
 
-    const dx = holder.x - this.dog.x;
-    const dy = holder.y - this.dog.y;
+    const chase = this.getHolderChasePoint(holder);
+    const dx = chase.x - this.dog.x;
+    const dy = chase.y - this.dog.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 1) return;
 
