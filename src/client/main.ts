@@ -38,7 +38,7 @@ overlay.innerHTML = `
       <span class="lobby-seal">犬</span>
       <div class="lobby-title">
         <h1>甩狗</h1>
-        <p class="lobby-subtitle">SHUAI GOU — 熱土豆 × 鬼抓人</p>
+        <p class="lobby-subtitle">SHUAI GOU</p>
       </div>
     </header>
     <p class="lobby-desc">選擇角色後加入房間，每位角色僅限一人。</p>
