@@ -32,6 +32,7 @@ export class GameRoom {
   private matchSeq = 0;
   private ballHolderId: string | null = null;
   private holdTimeSec = 0;
+  private flightPressureSec = 0;
   private countdownSec: number | null = null;
   private winnerId: string | null = null;
   private winnerName: string | null = null;
@@ -174,6 +175,7 @@ export class GameRoom {
       ball: { ...this.ball },
       ballHolderId: this.ballHolderId,
       holdTimeSec: this.holdTimeSec,
+      dogPressureSec: this.getDogPressureSec(),
       countdownSec: this.countdownSec,
       winnerId: this.winnerId,
       winnerName: this.winnerName,
@@ -195,6 +197,7 @@ export class GameRoom {
     this.phase = "lobby";
     this.ballHolderId = null;
     this.holdTimeSec = 0;
+    this.flightPressureSec = 0;
     this.countdownSec = null;
     this.winnerId = null;
     this.winnerName = null;
@@ -254,6 +257,7 @@ export class GameRoom {
       p.hasBall = false;
     }
     this.ballHolderId = null;
+    this.flightPressureSec = this.holdTimeSec;
     this.holdTimeSec = 0;
     this.ball = {
       x: fromX,
@@ -283,6 +287,7 @@ export class GameRoom {
     target.hasBall = true;
     this.ballHolderId = target.id;
     this.holdTimeSec = 0;
+    this.flightPressureSec = 0;
     this.ball.inFlight = false;
     this.ball.targetPlayerId = null;
     this.ball.x = target.x;
@@ -420,9 +425,14 @@ export class GameRoom {
     };
   }
 
+  private getDogPressureSec(): number {
+    return this.ball.inFlight ? this.flightPressureSec : this.holdTimeSec;
+  }
+
   private updateDogToward(dt: number, chaseX: number, chaseY: number) {
+    const pressure = this.getDogPressureSec();
     const targetSpeed = clamp(
-      GAME.DOG_BASE_SPEED + this.holdTimeSec * GAME.DOG_ACCEL_PER_SEC,
+      GAME.DOG_BASE_SPEED + pressure * GAME.DOG_ACCEL_PER_SEC,
       GAME.DOG_BASE_SPEED,
       GAME.DOG_MAX_SPEED,
     );

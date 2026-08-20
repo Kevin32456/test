@@ -19,7 +19,7 @@ overlay.className = "overlay-panel";
 overlay.innerHTML = `
   <div class="lobby-card">
     <h1>甩狗 Shuai Gou</h1>
-    <p>4 人連線派對：狗追持球者，持球不能 Blink，只能右鍵傳球。最後存活者獲勝。</p>
+    <p>4 人連線：狗追球、持球禁 Blink、右鍵移動傳球。v0.2 優化手感與視覺回饋。</p>
     <input id="name-input" maxlength="16" placeholder="輸入暱稱" value="玩家" />
     <ul id="player-list" class="player-list"></ul>
     <p id="lobby-status">連線中…</p>

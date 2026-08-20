@@ -16,6 +16,8 @@ export const GAME = {
   /** 弧度/秒 — 越小甩尾越明顯 */
   DOG_MAX_TURN_RATE: 2.8,
   TICK_HZ: 20,
+  /** 客戶端插值平滑係數（越大越貼近伺服器） */
+  CLIENT_LERP: 14,
   COUNTDOWN_SECONDS: 3,
   LOBBY_RESET_MS: 5000,
   BALL_RADIUS: 8,

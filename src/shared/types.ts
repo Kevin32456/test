@@ -35,6 +35,8 @@ export interface GameSnapshot {
   ball: BallState;
   ballHolderId: string | null;
   holdTimeSec: number;
+  /** 狗當前追擊壓力（持球累積；傳球飛行中凍結） */
+  dogPressureSec: number;
   countdownSec: number | null;
   winnerId: string | null;
   winnerName: string | null;
