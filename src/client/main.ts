@@ -363,6 +363,10 @@ joinBtn.addEventListener("click", () => {
   }
 
   const serverUrl = connectionMode.value === "remote" ? serverUrlInput.value : "";
+  if (connectionMode.value === "remote" && !serverUrl.trim()) {
+    lobbyStatus.textContent = "請輸入遠端伺服器 URL。";
+    return;
+  }
   const configured = configureServerUrl(serverUrl);
   if (!configured.ok) {
     lobbyStatus.textContent = "遠端伺服器 URL 無效，請確認以 http:// 或 https:// 開頭。";
