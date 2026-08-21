@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 前置／staging hardening
-- Status: 可玩；Render 公開服務已通過 4 人與 8 人多人 smoke，進入 online QA／Steam 前置階段
+- Status: 可玩；Render 公開服務已通過 4 人、8 人與瀏覽器 QA，進入跨裝置／Steam 前置階段
 
 ## 玩家幻想
 
@@ -34,6 +34,7 @@
 - 新增結構化 JSON server log（啟動、連線、加入拒絕／成功、斷線 reason）與 `npm run test:staging`
 - 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開端已完成新版 redeploy，`/ready` 回傳 `ready: true`、`version: staging`
 - 新增 `tests/staging.stress.ts` 與 `npm run test:staging:stress`：8 人滿房、第 9 人拒絕、應用層延遲／抖動／丟失 action、斷線清理與 8 人重連
+- 瀏覽器 QA 修正遠端模式空 URL 誤連目前頁面的問題；公開版已驗證空 URL 阻止加入、有效 Render URL 可加入，console 無 error/warn
 
 ## 核心規則
 
@@ -94,6 +95,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 公開 Render smoke：通過；`/ready` 與 `/health` 為新版 JSON，4 客戶／雙房間隔離、斷線清理與 4 角色重連成功，最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production：通過；8 人同房、192 個模擬 action、48 個丟失、8 人重連與清理成功
 - `npm run test:staging:stress` 公開 Render：通過；8 人同房、153/192 action 送出、39/192 action 丟失，所有客戶持續收到狀態，最後 `rooms:0`／`players:0`／`connections:0`
+- 公開瀏覽器 QA：通過；新版 bundle `index-D8uulqrq.js`，空白遠端 URL 顯示要求輸入並不建立房間；填入 `https://test-vccb.onrender.com` 可加入 `BRWQA22E`，離開後 `/ready` 回到 0 房／0 人／0 連線
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
@@ -112,6 +114,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - desktop 預設啟動本機 server；遠端 URL／房間碼已可測試，但尚未有常駐遠端部署、Steam App ID、Steam Lobby
 - Render staging URL 已取得並完成新版部署；8 人單房與應用層 action jitter/loss 已驗證，但尚未做真實 transport-level 丟包、跨裝置延遲或長時間壓測
 - `npm run test:staging:stress` 的延遲／抖動／丟失是測試客戶端 action 模擬，不等同於作業系統或路由器層的封包損失
+- 瀏覽器 QA 目前是單一瀏覽器工作階段，尚未取代 8 台不同裝置／網路的真人對局證據
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - Cloudflare 快速隧道無 SLA；關機即斷
 

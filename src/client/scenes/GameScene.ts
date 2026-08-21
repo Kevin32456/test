@@ -59,9 +59,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    for (const c of CHARACTERS) {
-      this.load.image(`char-${c.id}`, c.asset);
-    }
+    // 角色 PNG 尚未隨專案提供；create() 會使用程式繪製的 canvas fallback。
+    // 不預載不存在的檔案，避免瀏覽器 console 產生誤導性的 asset errors。
   }
 
   create() {
