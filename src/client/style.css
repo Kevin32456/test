@@ -170,6 +170,20 @@ body {
 
 /* ===== 表單 ===== */
 
+.connection-settings {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.connection-field {
+  min-width: 0;
+}
+
+.connection-field[hidden] {
+  display: none;
+}
+
 .field-label {
   display: block;
   margin-bottom: 4px;
@@ -177,7 +191,8 @@ body {
   color: var(--muted);
 }
 
-.lobby-card input {
+.lobby-card input,
+.lobby-card select {
   width: 100%;
   padding: 10px 12px;
   border: 2px solid var(--line);
@@ -188,9 +203,15 @@ body {
   font-size: 12px;
 }
 
-.lobby-card input:focus {
+.lobby-card input:focus,
+.lobby-card select:focus {
   outline: none;
   border-color: var(--gold);
+}
+
+.lobby-card input:disabled,
+.lobby-card select:disabled {
+  opacity: 0.62;
 }
 
 .lobby-card button {

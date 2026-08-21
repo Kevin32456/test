@@ -18,6 +18,7 @@ import type {
   GamePhase,
   GameSnapshot,
 } from "../src/shared/types.js";
+import { isClientAction } from "./validation.js";
 
 const px = (v: number) => Math.round(v * 10) / 10;
 const rad = (v: number) => Math.round(v * 1000) / 1000;
@@ -77,6 +78,9 @@ export class GameRoom {
   }
 
   addPlayer(id: string, name: string, characterId: string): boolean {
+    if (typeof name !== "string" || typeof characterId !== "string") {
+      return false;
+    }
     if (this.players.size >= GAME.MAX_PLAYERS) return false;
     if (this.phase !== "lobby" && this.phase !== "ended") return false;
     if (!isValidCharacterId(characterId)) return false;
@@ -125,12 +129,20 @@ export class GameRoom {
     if (this.players.size === 0) {
       this.stopTick();
       this.resetLobby();
+    } else if (
+      this.phase === "countdown" &&
+      this.players.size < GAME.MIN_PLAYERS_TO_START
+    ) {
+      this.resetLobby();
+      this.stopTick();
+      this.onBroadcast(true);
     } else if (this.phase === "playing" && this.deathPauseMs <= 0) {
       this.checkWin();
     }
   }
 
   handleAction(id: string, action: ClientAction) {
+    if (!isClientAction(action)) return;
     const player = this.players.get(id);
     if (!player) return;
 
@@ -284,6 +296,8 @@ export class GameRoom {
       p.alive = true;
       p.hasBall = false;
       p.blinkCooldownMs = 0;
+      p.inputX = 0;
+      p.inputY = 0;
       const spawn = this.spawnPoint([...this.players.keys()].indexOf(p.id));
       p.x = spawn.x;
       p.y = spawn.y;

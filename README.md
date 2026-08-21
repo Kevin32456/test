@@ -20,6 +20,13 @@ npm install
 npm run dev
 ```
 
+Focused server checks：
+
+```bash
+npm test
+npm run typecheck
+```
+
 - 前端：http://127.0.0.1:4317
 - 伺服器：4318（Socket.io，Vite 會 proxy）
 
@@ -33,7 +40,7 @@ npm run build
 PowerShell：
 
 ```powershell
-$env:NODE_ENV='production'; $env:HOST='0.0.0.0'; $env:PORT='4320'; npx tsx server/index.ts
+$env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 ```
 
 Unix：
@@ -42,7 +49,40 @@ Unix：
 NODE_ENV=production HOST=0.0.0.0 PORT=4320 npm start
 ```
 
+`npm start` 會跨平台以 production 模式啟動；未指定 `PORT` 時預設為 4318。
+
 瀏覽器開對應埠即可（靜態頁 + WebSocket 同一 port）。預設未設 `PORT` 時為 4318。
+
+## Staging 部署與 smoke test
+
+Render Blueprint 已設定為 `npm ci && npm run build`，啟動使用編譯後的 `npm run start:prod`，健康檢查為 `/health`。本機可用同一流程驗證：
+
+```powershell
+npm ci
+npm run build
+$env:HOST='127.0.0.1'; $env:PORT='4395'; $env:APP_VERSION='staging-local'; npm run start:prod
+```
+
+伺服器提供 `/health` 與 `/ready`，會回報版本、啟動時間、uptime、房間數、玩家數與連線數；啟動、加入、拒絕與斷線會輸出 JSON log。對已部署的 URL 執行 4 人／雙房間 smoke：
+
+```powershell
+$env:STAGING_URL='https://你的-staging-url'; npm run test:staging
+```
+
+Docker 也會使用 `dist-server` 的編譯結果啟動，不需要在 runtime 重新載入 TypeScript。
+
+## Windows 桌面版（Steam 前置）
+
+桌面版目前使用 Electron 包裝 Phaser，啟動時會在本機 loopback 動態埠啟動內嵌的 production server；這是本機／Steam 前置測試，不需要 Steamworks App ID 或 Steam Direct 費用。
+
+```powershell
+npm run desktop:dev
+npm run desktop:build
+```
+
+portable 輸出位置：`release/Shuai-Gou-0.4.0-x64.exe`。目前執行檔尚未配置正式遊戲圖示與程式碼簽章，也尚未接 Steamworks；遠端多人伺服器仍需另外部署。
+
+桌面版大廳可選「目前伺服器（本機／此頁面）」或「遠端伺服器」，並輸入房間碼。房間碼為 4–12 碼英數字；要一起玩的玩家必須使用相同的伺服器 URL 與房間碼。桌面版預設使用自己啟動的本機伺服器，改用遠端測試時，所有玩家輸入同一個公開 URL 即可。
 
 ## 給朋友連線
 
@@ -61,6 +101,8 @@ cloudflared tunnel --url http://127.0.0.1:4320
 
 把產生的 `https://*.trycloudflare.com` 分享給朋友。路徑會繞 Cloudflare，延遲通常高於 Radmin／區網。電腦休眠或關掉隧道／伺服器視窗，網址即失效。
 
+進入遊戲後選「遠端伺服器」，貼上該 URL，再讓所有玩家輸入同一房間碼（例如 `ALPHA`）。不同房間碼會互相隔離，不會看到彼此玩家或狀態。
+
 **注意：** 關瀏覽器分頁會把該玩家移出房間；關伺服器或隧道視窗則整場斷線。
 
 ## 部署
@@ -70,8 +112,8 @@ cloudflared tunnel --url http://127.0.0.1:4320
 1. 將 repo 連到 [Render](https://render.com)
 2. 選 **Blueprint** 或手動 Web Service（根目錄有 `render.yaml`）
 3. 手動設定：
-   - Build：`npm install && npm run build`
-   - Start：`npm start`
+   - Build：`npm ci && npm run build`
+   - Start：`npm run start:prod`
    - Env：`NODE_ENV=production`
 
 目前 playtest 以本機 + 隧道／Radmin 為主，尚未綁定常駐雲端。

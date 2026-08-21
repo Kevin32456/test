@@ -60,6 +60,8 @@ export type ClientAction =
 export interface JoinPayload {
   name: string;
   characterId: string;
+  /** 舊版客戶端未提供時，伺服器會使用 MAIN。 */
+  roomCode?: string;
 }
 
 export interface JoinedPayload {

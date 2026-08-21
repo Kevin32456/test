@@ -76,6 +76,14 @@ export const GAME = {
   COLORS: ["#4fc3f7", "#81c784", "#ffb74d", "#e57373"],
 } as const;
 
+export const DEFAULT_ROOM_CODE = "MAIN";
+
+/** 房間碼只允許 4–12 碼英數字，避免把 URL 或特殊字元帶進房間名稱。 */
+export const normalizeRoomCode = (value?: string | null): string | null => {
+  const code = (value ?? DEFAULT_ROOM_CODE).trim().toUpperCase();
+  return /^[A-Z0-9]{4,12}$/.test(code) ? code : null;
+};
+
 export const arenaCenter = () => ({
   x: GAME.ARENA_WIDTH / 2,
   y: GAME.ARENA_HEIGHT / 2,

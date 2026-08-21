@@ -1,9 +1,15 @@
 import { io, Socket } from "socket.io-client";
 import type { ClientAction, GameSnapshot, JoinedPayload } from "@shared/types";
 
-export const socket: Socket = io({
-  transports: ["websocket", "polling"],
-});
+type NetworkHandlers = {
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onJoined: (payload: JoinedPayload) => void;
+};
+
+let socket: Socket | null = null;
+let activeServerUrl = "";
+let networkHandlers: NetworkHandlers | null = null;
 
 export let playerId = "";
 export let latestSnapshot: GameSnapshot | null = null;
@@ -11,15 +17,71 @@ export let latestSnapshot: GameSnapshot | null = null;
 type StateListener = (snapshot: GameSnapshot) => void;
 const stateListeners = new Set<StateListener>();
 
-socket.on("state", (snapshot: GameSnapshot) => {
-  latestSnapshot = snapshot;
-  for (const listener of stateListeners) {
-    listener(snapshot);
+function bindLifecycleHandlers(nextSocket: Socket) {
+  if (!networkHandlers) return;
+
+  nextSocket.on("connect", networkHandlers.onConnect);
+  nextSocket.on("disconnect", networkHandlers.onDisconnect);
+  nextSocket.on("joined", (payload: JoinedPayload) => {
+    playerId = payload.playerId;
+    latestSnapshot = payload.snapshot;
+    networkHandlers?.onJoined(payload);
+  });
+}
+
+function ensureSocket(): Socket {
+  if (socket) return socket;
+
+  socket = io(activeServerUrl || undefined, {
+    autoConnect: false,
+    transports: ["websocket", "polling"],
+  });
+  socket.on("state", (snapshot: GameSnapshot) => {
+    latestSnapshot = snapshot;
+    for (const listener of stateListeners) {
+      listener(snapshot);
+    }
+  });
+  bindLifecycleHandlers(socket);
+  socket.connect();
+  return socket;
+}
+
+function normalizeServerUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return null;
   }
-});
+}
+
+export function configureServerUrl(
+  value: string,
+): { ok: true; url: string } | { ok: false; reason: "invalid_url" } {
+  const nextUrl = normalizeServerUrl(value);
+  if (nextUrl === null) return { ok: false, reason: "invalid_url" };
+  if (socket && nextUrl === activeServerUrl) return { ok: true, url: nextUrl };
+
+  socket?.disconnect();
+  socket = null;
+  playerId = "";
+  latestSnapshot = null;
+  activeServerUrl = nextUrl;
+  ensureSocket();
+  return { ok: true, url: nextUrl };
+}
+
+export function getServerUrl(): string {
+  return activeServerUrl;
+}
 
 export function getSocket(): Socket {
-  return socket;
+  return ensureSocket();
 }
 
 export function getPlayerId(): string {
@@ -36,27 +98,23 @@ export function subscribeState(listener: StateListener): () => void {
 }
 
 export function sendAction(action: ClientAction) {
-  socket.emit("action", action);
+  ensureSocket().emit("action", action);
 }
 
-export function bindNetworkHandlers(handlers: {
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onJoined: (payload: JoinedPayload) => void;
-}) {
-  socket.on("connect", handlers.onConnect);
-  socket.on("disconnect", handlers.onDisconnect);
-  socket.on("joined", (payload: JoinedPayload) => {
-    playerId = payload.playerId;
-    latestSnapshot = payload.snapshot;
-    handlers.onJoined(payload);
-  });
+export function bindNetworkHandlers(handlers: NetworkHandlers) {
+  networkHandlers = handlers;
+  if (socket) {
+    bindLifecycleHandlers(socket);
+    return;
+  }
+  ensureSocket();
 }
 
 export function joinRoom(
   name: string,
   characterId: string,
+  roomCode: string,
   ack: (ok: boolean, reason?: string) => void,
 ) {
-  socket.emit("join", { name, characterId }, ack);
+  ensureSocket().emit("join", { name, characterId, roomCode }, ack);
 }

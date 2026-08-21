@@ -33,3 +33,23 @@
 ## 設計限制（不是 bug）
 
 接到球不能立刻再傳：必須等球落地（`inFlight`）。畫面插值可能先看起來貼身，HUD 仍顯示飛行中。優化方向是事件即時廣播（已做）或飛行中預傳（未做），不是加接球硬直。
+
+## 已結案：malformed 網路 payload 使 server 結束（2026-08-21）
+
+**現象：** 非字串暱稱會在 `name.slice()` 拋出例外；`action = null` 也可能在讀取 `action.type` 時中斷事件處理。
+
+**根因：** Socket.IO payload 只有 TypeScript compile-time 型別，沒有 runtime trust-boundary 驗證。
+
+**作法：** 新增 `server/validation.ts`，在 join/action 邊界拒絕 malformed payload，`GameRoom` 再做防禦性檢查。
+
+**驗證：** malformed join 回傳 `invalid_payload`；malformed action 後 `/health` 仍為 200。
+
+## 已結案：倒數期間玩家離場（2026-08-21）
+
+**現象：** 兩人開始倒數時其中一人離場，剩餘一人仍會進入對局，下一幀才因只剩一人結束。
+
+**根因：** `removePlayer()` 只處理空房與 `playing`，沒有在 `countdown` 檢查最低開局人數。
+
+**作法：** 倒數中人數低於 `MIN_PLAYERS_TO_START` 時重置大廳、停止 tick 並立即廣播。
+
+**驗證：** focused test 確認倒數立即回到 `lobby`，不會啟動一人對局。

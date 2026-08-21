@@ -6,8 +6,8 @@
 
 ## Current Phase
 
-- Phase: 維護／平衡與連線手感
-- Status: 可玩；本機 production + Radmin／Cloudflare 隧道 playtest
+- Phase: Steam 前置／staging hardening
+- Status: 可玩；已取得 Render staging URL，但目前部署仍是 GitHub `main` 舊版，尚未驗證本機 staging hardening 版本
 
 ## 玩家幻想
 
@@ -22,6 +22,17 @@
 - 開局狗給基礎速度；高速時轉向與折返隨速度放大（避免無限甩尾無敵）
 - 咬人半徑 15+18；死亡停頓 2 秒後從死者位置重開球
 - 離場玩家會從畫面移除（socket id 換新不再殘影）
+- Socket.IO join/action 已加入 runtime payload 驗證，malformed payload 不再讓 server 崩潰
+- 倒數期間低於 2 人會取消倒數並回到大廳
+- `npm start` 改為跨平台 production 啟動；新增 server focused tests 與 GitHub Actions CI
+- Phaser 改為進入倒數／遊戲時才 dynamic import，縮小初始 entry bundle
+- 新增 Electron desktop wrapper；啟動時內嵌 production server，產生 Windows portable `.exe`
+- 新增 4–12 碼英數房間碼；伺服器按房間隔離 Socket.IO 狀態與玩家名單，空房會清理
+- 大廳可切換目前伺服器／遠端伺服器；遠端 URL 與房間碼會記住在本機 localStorage
+- join 邊界拒絕未知角色 ID；玩家名單改用 text node 渲染，避免遠端暱稱注入 HTML
+- staging 改用 `dist-server` 編譯結果啟動；新增 `/ready`、版本／uptime／房間／連線狀態
+- 新增結構化 JSON server log（啟動、連線、加入拒絕／成功、斷線 reason）與 `npm run test:staging`
+- 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開端首頁可載入，但 `/ready` 目前回傳舊版首頁 HTML
 
 ## 核心規則
 
@@ -41,9 +52,13 @@
 
 - `src/shared/constants.ts` — 平衡與同步頻率
 - `server/GameRoom.ts` — 權威物理、傳球、狗、擊殺
-- `server/index.ts` — 送包節流與即時事件
+- `server/index.ts` — 房間管理、送包節流與即時事件
+- `server/validation.ts`、`server/start.ts` — 網路 payload 驗證、跨平台 production 啟動
+- `electron/main.cjs`、`tsconfig.server.build.json` — 桌面啟動器、內嵌 server、server emit build
+- `src/client/network.ts`、`src/client/main.ts`、`src/client/style.css` — 遠端 URL／房間碼設定與大廳 UI
 - `src/client/scenes/GameScene.ts` — 輸入、插值、hover、離場清圖
-- `src/client/main.ts` — 大廳（無操控模式）
+- `tests/server.test.ts`、`tests/staging.smoke.ts`、`.github/workflows/ci.yml` — focused tests、staging smoke、CI
+- `render.yaml`、`Dockerfile`、`package.json` — Render／Docker 編譯後啟動設定
 
 ## Git
 
@@ -61,12 +76,25 @@ npm run build
 PowerShell 正式（常用 playtest 埠）：
 
 ```powershell
-$env:NODE_ENV='production'; $env:HOST='0.0.0.0'; $env:PORT='4320'; npx tsx server/index.ts
+$env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 ```
 
 ## Verification
 
+- `npm test`：通過（payload validation、倒數離場重置）
 - `npm run typecheck`：通過
+- `npm run build`：通過；初始 entry 約 54 KB，Phaser deferred chunk 約 1.48 MB
+- `npm run desktop:build`：通過；產生 `release/Shuai-Gou-0.4.0-x64.exe`（105,320,850 bytes，SHA256 `4F5C44937F64ABB07B57EE088C8DE8844E1D72E1EF0CEEA2B1319944447CE0C3`）
+- packaged unpacked runtime smoke：通過；動態 loopback port `/health` 200、phase `lobby`
+- portable runtime smoke：通過；首次解包等待後動態 loopback port `/health` 200、phase `lobby`
+- multi-room Socket.IO smoke：通過；`ALPHA`／`BETA` 各自只看到同房 2 人，health 回報 2 房／4 人，斷線後房間清理
+- `npm run start:prod`：通過；compiled server `/ready`、首頁靜態檔 200
+- `npm run test:staging`：通過；4 人雙房間、斷線後 4 個角色可再次加入，最後 `rooms:0`／`players:0`／`connections:0`
+- 公開 Render smoke：未通過；`/ready` HTTP 200 但回傳 HTML，`npm run test:staging` 因 JSON 解析失敗停止，證明目前部署不是本機編譯版本
+- staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
+- Windows `npm start`、`/health`、production 首頁：通過
+- malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
+- 瀏覽器大廳／兩人開局 smoke：可建立 Phaser canvas 並進入對局
 - 本機 4320 + Cloudflare 隧道可載入大廳與新 bundle
 - 離場殘影、傳球 hover 已在線上 build 驗證入口 HTML
 
@@ -75,9 +103,15 @@ $env:NODE_ENV='production'; $env:HOST='0.0.0.0'; $env:PORT='4320'; npx tsx serve
 - 8 人滿房、Radmin 滿載上傳尚未完整實測
 - 接到球到可再傳仍受飛行時間 + 單程延遲限制（非接球硬直）
 - 高速 agility 0.9 的甩尾／咬人平衡需再 playtest
-- Render 尚未當正式常駐主機
+- 角色 PNG 仍不存在；目前依需求保留程式繪製 fallback 與對應載入錯誤
+- Phaser deferred chunk 仍大，需以 profiler／目標裝置決定是否進一步拆分
+- desktop prototype 使用 Electron 預設圖示，尚未配置正式 icon／Windows code signing
+- desktop 預設啟動本機 server；遠端 URL／房間碼已可測試，但尚未有常駐遠端部署、Steam App ID、Steam Lobby
+- Render staging URL 已取得，但目前服務對應的 GitHub `main`（`9e303da`）尚未包含本機未提交的 staging hardening 變更
+- `npm run test:staging` 目前是 4 客戶／雙房間 smoke，不是 8 人壓測或延遲／丟包測試
+- Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - Cloudflare 快速隧道無 SLA；關機即斷
 
 ## Next Safest Task
 
-playtest：高速甩尾是否還能無限脫身；傳球 hover 點空率；Radmin 與隧道延遲對比。若仍無敵，再調 `DOG_SPEED_AGILITY_GAIN` 或加連續掠過懲罰。
+下一個最安全任務是先將本機 staging hardening 變更提交並推送到 Render 所追蹤的 GitHub `main`（或由使用者在本機完成此步驟），等待 Render 重新部署後再執行 `npm run test:staging` 公開端到端驗證；通過後再做 8 人／延遲／丟包測試。先不要付 Steam Direct 或接完整 Steamworks SDK。
