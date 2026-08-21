@@ -50,6 +50,9 @@ export class GameScene extends Phaser.Scene {
   private lastCountdownBeep = -1;
   private displayBall = { x: 0, y: 0, tx: 0, ty: 0 };
   private pulseT = 0;
+  private passHoverRing!: Phaser.GameObjects.Arc;
+  private passHoverHint!: Phaser.GameObjects.Text;
+  private hoveredPassId: string | null = null;
 
   constructor() {
     super("GameScene");
@@ -105,6 +108,21 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100);
 
+    this.passHoverRing = this.add
+      .circle(0, 0, GAME.PLAYER_RADIUS + 16, 0x000000, 0)
+      .setStrokeStyle(3, 0x80deea, 0.95)
+      .setDepth(35)
+      .setVisible(false);
+    this.passHoverHint = this.add
+      .text(0, 0, "可傳球", pixelTextStyle(PIXEL_FONT_SIZES.xs, {
+        color: "#b2ebf2",
+        backgroundColor: "rgba(10,16,20,0.78)",
+        padding: { x: 6, y: 3 },
+      }))
+      .setOrigin(0.5)
+      .setDepth(36)
+      .setVisible(false);
+
     this.input.mouse?.disableContextMenu();
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
@@ -140,6 +158,7 @@ export class GameScene extends Phaser.Scene {
     this.playerLabels.clear();
     this.holderRings.clear();
     this.displayPlayers.clear();
+    this.hoveredPassId = null;
   }
 
   update(_time: number, delta: number) {
@@ -196,6 +215,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.drawThreatBar(snapshot);
+    this.updatePassHover(snapshot);
   }
 
   private drawThreatBar(snapshot: GameSnapshot) {
@@ -267,7 +287,7 @@ export class GameScene extends Phaser.Scene {
     if (!me || !me.alive) return;
 
     if (me.hasBall && !snapshot.ball.inFlight) {
-      const target = this.findPlayerAt(wx, wy, snapshot.players);
+      const target = this.findPlayerAt(wx, wy, snapshot.players, me.id);
       if (target && target.alive && target.id !== me.id) {
         sendAction({ type: "pass", targetId: target.id });
         return;
@@ -282,18 +302,58 @@ export class GameScene extends Phaser.Scene {
     wx: number,
     wy: number,
     players: PlayerState[],
+    exceptId?: string,
   ): PlayerState | null {
     let found: PlayerState | null = null;
     let best = Infinity;
     for (const p of players) {
-      if (!p.alive) continue;
-      const d = Phaser.Math.Distance.Between(wx, wy, p.x, p.y);
-      if (d <= GAME.PLAYER_RADIUS + 10 && d < best) {
+      if (!p.alive || p.id === exceptId) continue;
+      const dp = this.displayPlayers.get(p.id);
+      const x = dp?.x ?? p.x;
+      const y = dp?.y ?? p.y;
+      const d = Phaser.Math.Distance.Between(wx, wy, x, y);
+      if (d <= GAME.PASS_PICK_RADIUS && d < best) {
         best = d;
         found = p;
       }
     }
     return found;
+  }
+
+  private updatePassHover(snapshot: GameSnapshot) {
+    const me = this.getMe();
+    const pointer = this.input.activePointer;
+    const canPass =
+      snapshot.phase === "playing" &&
+      snapshot.deathPauseMs <= 0 &&
+      !!me?.alive &&
+      me.hasBall &&
+      !snapshot.ball.inFlight;
+
+    const target = canPass
+      ? this.findPlayerAt(pointer.worldX, pointer.worldY, snapshot.players, me.id)
+      : null;
+
+    if (this.hoveredPassId && this.hoveredPassId !== target?.id) {
+      this.playerSprites.get(this.hoveredPassId)?.setScale(1);
+    }
+    this.hoveredPassId = target?.id ?? null;
+
+    if (!target) {
+      this.passHoverRing.setVisible(false);
+      this.passHoverHint.setVisible(false);
+      this.input.setDefaultCursor("default");
+      return;
+    }
+
+    const dp = this.displayPlayers.get(target.id);
+    const x = dp?.x ?? target.x;
+    const y = dp?.y ?? target.y;
+    const pulse = 1 + 0.07 * Math.sin(this.pulseT * 0.014);
+    this.playerSprites.get(target.id)?.setScale(1.08);
+    this.passHoverRing.setPosition(x, y).setScale(pulse).setVisible(true);
+    this.passHoverHint.setPosition(x, y - 64).setVisible(true);
+    this.input.setDefaultCursor("pointer");
   }
 
   private getMe() {
@@ -363,6 +423,7 @@ export class GameScene extends Phaser.Scene {
     this.playerLabels.delete(id);
     this.holderRings.delete(id);
     this.displayPlayers.delete(id);
+    if (this.hoveredPassId === id) this.hoveredPassId = null;
   }
 
   private resetRoundVisuals() {

@@ -6,6 +6,8 @@ export const GAME = {
   /** 圓形競技場半徑（中心為 ARENA 正中央） */
   ARENA_RADIUS: 420,
   PLAYER_RADIUS: 18,
+  /** 右鍵點選傳球目標的判定半徑（大於角色本體，含名牌附近） */
+  PASS_PICK_RADIUS: 44,
   /** 玩家被狗命中的有效半徑；獨立於移動／邊界碰撞 */
   PLAYER_HIT_RADIUS: 15,
   PLAYER_SPEED: 300,
