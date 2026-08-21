@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 前置／staging hardening
-- Status: 可玩；已取得 Render staging URL，但目前部署仍是 GitHub `main` 舊版，尚未驗證本機 staging hardening 版本
+- Status: 可玩；staging hardening 已推送至 GitHub `main`（`304a4f9`），Render 公開服務仍待切換新版
 
 ## 玩家幻想
 
@@ -32,7 +32,7 @@
 - join 邊界拒絕未知角色 ID；玩家名單改用 text node 渲染，避免遠端暱稱注入 HTML
 - staging 改用 `dist-server` 編譯結果啟動；新增 `/ready`、版本／uptime／房間／連線狀態
 - 新增結構化 JSON server log（啟動、連線、加入拒絕／成功、斷線 reason）與 `npm run test:staging`
-- 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開端首頁可載入，但 `/ready` 目前回傳舊版首頁 HTML
+- 已取得 Render staging URL：`https://test-vccb.onrender.com`；提交 `304a4f9` 已推送，公開端目前仍回傳舊版首頁 HTML，等待 Render redeploy
 
 ## 核心規則
 
@@ -90,7 +90,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - multi-room Socket.IO smoke：通過；`ALPHA`／`BETA` 各自只看到同房 2 人，health 回報 2 房／4 人，斷線後房間清理
 - `npm run start:prod`：通過；compiled server `/ready`、首頁靜態檔 200
 - `npm run test:staging`：通過；4 人雙房間、斷線後 4 個角色可再次加入，最後 `rooms:0`／`players:0`／`connections:0`
-- 公開 Render smoke：未通過；`/ready` HTTP 200 但回傳 HTML，`npm run test:staging` 因 JSON 解析失敗停止，證明目前部署不是本機編譯版本
+- 公開 Render smoke：部署切換前未通過；`/ready` HTTP 200 但回傳 HTML，`npm run test:staging` 因 JSON 解析失敗停止；推送後尚未重新驗證
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
@@ -107,11 +107,11 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - Phaser deferred chunk 仍大，需以 profiler／目標裝置決定是否進一步拆分
 - desktop prototype 使用 Electron 預設圖示，尚未配置正式 icon／Windows code signing
 - desktop 預設啟動本機 server；遠端 URL／房間碼已可測試，但尚未有常駐遠端部署、Steam App ID、Steam Lobby
-- Render staging URL 已取得，但目前服務對應的 GitHub `main`（`9e303da`）尚未包含本機未提交的 staging hardening 變更
+- Render staging URL 已取得，GitHub `main` 已更新至 `304a4f9`，但目前服務查詢結果仍像是舊版，需確認 Render deploy 狀態
 - `npm run test:staging` 目前是 4 客戶／雙房間 smoke，不是 8 人壓測或延遲／丟包測試
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - Cloudflare 快速隧道無 SLA；關機即斷
 
 ## Next Safest Task
 
-下一個最安全任務是先將本機 staging hardening 變更提交並推送到 Render 所追蹤的 GitHub `main`（或由使用者在本機完成此步驟），等待 Render 重新部署後再執行 `npm run test:staging` 公開端到端驗證；通過後再做 8 人／延遲／丟包測試。先不要付 Steam Direct 或接完整 Steamworks SDK。
+下一個最安全任務是確認 Render 已完成 `304a4f9` 部署；`/ready` 回傳新版 JSON 後執行 `npm run test:staging` 公開端到端驗證，通過後再做 8 人／延遲／丟包測試。先不要付 Steam Direct 或接完整 Steamworks SDK。
