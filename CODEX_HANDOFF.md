@@ -130,7 +130,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 本機英文內容 smoke：通過；語言切換後角色 SVG 8/8 完整載入，練習房英文畫面完成 `1/3 → 2/3 → 3/3`，Phaser canvas 無 asset error
 - 本機結算 smoke：通過；兩名玩家實際對局後顯示勝者、本人出局、出局原因、下一步與下一局準備入口
 - 小螢幕入口 smoke：通過；390×844 下競技場選單、加入房間與練習房按鈕可見可操作，viewport 已恢復預設
-- 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標；清理後 `/ready` 回到 0 房／0 人／0 連線
+- 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標，實際雙人回合顯示勝者／出局原因／下一步／準備下一局；清理後 `/ready` 回到 0 房／0 人／0 連線
 - 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；最新 8 人內容以公開 staging stress script 重跑，跨裝置仍待真人驗證
 - `npm run test:staging:replay` 公開 Render（最新 staging）：通過；4 回合 × 5 秒、每回合 2 客戶與 47 個 action，state events 約 177–181／客戶，最後 `rooms:0`／`players:0`／`connections:0`
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
