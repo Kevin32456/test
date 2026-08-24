@@ -67,6 +67,7 @@ $env:HOST='127.0.0.1'; $env:PORT='4395'; $env:APP_VERSION='staging-local'; npm r
 
 ```powershell
 $env:STAGING_URL='https://你的-staging-url'; npm run test:staging
+$env:STAGING_URL='https://你的-staging-url'; npm run test:staging:network
 ```
 
 Docker 也會使用 `dist-server` 的編譯結果啟動，不需要在 runtime 重新載入 TypeScript。

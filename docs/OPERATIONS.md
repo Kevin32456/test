@@ -37,7 +37,7 @@
 - 以 Prometheus-compatible collector 抓取 `/metrics`；至少保存 active connections、rooms、players、joins、disconnects 與 invalid actions 的時間序列。
 - 告警目的地、log drain 與正式 URL 需在 Render／監控服務帳號中配置；本 repo 只提供可被監控的 endpoint 與結構化訊號，不假裝已替使用者建立外部帳號。
 
-部署後先記錄：`STAGING_URL=https://test-vccb.onrender.com npm run test:staging`、`npm run test:staging:stress` 與 `npm run test:staging:replay`。
+部署後先記錄：`STAGING_URL=https://test-vccb.onrender.com npm run test:staging`、`npm run test:staging:stress`、`npm run test:staging:network` 與 `npm run test:staging:replay`。
 
 ## 發佈閘門
 
@@ -47,10 +47,10 @@
 2. `npm test`
 3. `npm run test:content`
 4. `npm run build`
-5. 本機 production `/ready`、`npm run test:staging`、`npm run test:staging:stress`
+5. 本機 production `/ready`、`npm run test:staging`、`npm run test:staging:network`、`npm run test:staging:stress`
 6. `git push origin main`
 7. Render Deploy latest commit
-8. 確認公開 `/ready` 的 `startedAt`／版本已變更，再重跑公開 smoke、stress、replay
+8. 確認公開 `/ready` 的 `startedAt`／版本已變更，再重跑公開 smoke、network、stress、replay
 
 不要只看 Render deploy 顯示成功；若公開 bundle 沒有最新功能字串或 `/ready` 啟動時間未更新，視為尚未部署。
 
