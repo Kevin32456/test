@@ -584,3 +584,72 @@ body {
   border: 1px solid var(--line);
   font-size: 12px;
 }
+
+/* 390px 手機入口：保留可讀性與垂直滾動，不讓雙語長句把整張卡片撐出視窗。 */
+@media (max-width: 420px) {
+  .lobby-card,
+  .lobby-card-wide {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 18px 14px 16px;
+  }
+
+  .lobby-header {
+    gap: 9px;
+    margin-bottom: 9px;
+  }
+
+  .lobby-seal {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+
+  .lobby-title h1 {
+    font-size: 20px;
+    letter-spacing: 0.12em;
+  }
+
+  .guide-panel summary {
+    gap: 6px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .guide-summary-note {
+    font-size: 9px;
+  }
+
+  .guide-steps {
+    padding-left: 19px;
+    font-size: 11px;
+    line-height: 1.55;
+  }
+
+  .character-grid {
+    gap: 7px;
+  }
+
+  .char-card img {
+    width: 58px;
+  }
+
+  .char-name {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .char-tagline,
+  .char-description,
+  .char-status {
+    font-size: 9px;
+  }
+
+  .char-description {
+    min-height: 4.35em;
+  }
+
+  .result-panel h2 {
+    font-size: 16px;
+  }
+}
