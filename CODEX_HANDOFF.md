@@ -119,7 +119,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run test:staging`：通過；4 人雙房間、斷線後 4 個角色可再次加入，最後 `rooms:0`／`players:0`／`connections:0`
 - 公開 Render smoke（最新 staging）：通過；`/ready` 與 `/health` 為 JSON，4 客戶／雙房間隔離、斷線清理與 4 角色重連成功；測後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production：通過；8 人同房、192 個模擬 action、48 個丟失、8 人重連與清理成功
-- `npm run test:staging:stress` 公開 Render（最新 staging）：通過；8 人月影庭同房、第 9 人拒絕、151/192 action 送出、41/192 丟失、最大延遲 3612ms、8/8 持續收到狀態，重連與清理成功
+- `npm run test:staging:stress` 公開 Render（最新 staging）：通過；8 人月影庭同房、第 9 人拒絕、8 個 distinct spawn、真實 pass flight、狗路徑 130 個位置／58 個轉向樣本、150/192 action 送出、42/192 丟失、最大延遲 3624ms、8/8 持續收到狀態，重連與清理成功
 - `npm run typecheck`：通過；第二競技場的 shared/server/client arena contract 無型別錯誤
 - `npm test`：通過；arena join/action 驗證、房間 arena snapshot 與既有倒數離場測試通過
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯
@@ -133,7 +133,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 小螢幕入口 smoke：通過；390×844 下競技場選單、加入房間與練習房按鈕可見可操作，viewport 已恢復預設
 - 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標，實際雙人回合顯示勝者／出局原因／下一步／準備下一局；清理後 `/ready` 回到 0 房／0 人／0 連線
 - 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；最新 8 人內容以公開 staging stress script 重跑，跨裝置仍待真人驗證
-- `npm run test:staging:replay` 公開 Render（最新 staging）：通過；4 回合 × 5 秒、每回合 2 客戶與 47 個 action，state events 約 177–181／客戶，最後 `rooms:0`／`players:0`／`connections:0`
+- `npm run test:staging:replay` 公開 Render（最新 staging）：通過；短 replay 4 回合 × 5 秒，另完成長 replay 3 回合 × 15 秒（每回合約 139–140 actions、404–409 state events／客戶），最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:network` 公開 Render（最新 staging）：通過；connect 約 682ms、join ack 約 161ms、128 個樣本，狀態間隔 p95 50ms／最大 813ms，真實 disconnect／reconnect／重新加入與清理成功；第一次部署後執行曾遇到 staging 重啟，重試通過
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
@@ -161,7 +161,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 本輪遊戲內容部署基線為 GitHub `7cbf411`，網路測試與維運紀錄後續已推送至 `e1c07cb`；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則
 - 角色描述仍是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞或特殊回合
-- 第二競技場已完成同機 8 人與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與長時間重玩驗證
+- 第二競技場已完成同機 8 人、公開長 replay 與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與真人長時間重玩意願驗證
 
 ## Next Safest Task
 

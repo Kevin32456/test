@@ -17,8 +17,8 @@
 ## 已通過
 
 - `npm run test:staging`：4 客戶、雙房間隔離、斷線清理與重新加入
-- `npm run test:staging:stress`：8 人月影庭、第 9 人拒絕、151/192 action 送出、41/192 應用層丟失、最大延遲 3612ms、8 人重連與清理
-- `npm run test:staging:replay`：4 回合 × 5 秒；每回合 2 客戶、47 actions、約 177–181 state events／客戶，最終清理為 0
+- `npm run test:staging:stress`：8 人月影庭、第 9 人拒絕、8 個 distinct spawn、真實 pass flight、狗路徑 130 個位置／58 個轉向樣本、150/192 action 送出、42/192 應用層丟失、最大延遲 3624ms、8 人重連與清理
+- `npm run test:staging:replay`：公開短回合 4 回合 × 5 秒通過；另以 3 回合 × 15 秒長 replay 通過，每回合約 139–140 actions、404–409 state events／客戶，最終清理為 0
 - `npm run test:staging:network`：真實 Render WebSocket；connect 約 682ms、join ack 約 161ms、128 個狀態樣本，間隔 p95 50ms／最大 813ms，disconnect→reconnect→重新加入通過，最終清理為 0
 - 公開瀏覽器單人練習：完成 1/3 → 2/3 → 3/3 → 練習完成
 - 公開瀏覽器雙分頁：兩位玩家以不同角色加入同一個月影庭房間，兩頁同步顯示月影庭四個月燈路標與相同玩家位置；繁中／英文切換與 8 個正式 SVG 圖示載入成功

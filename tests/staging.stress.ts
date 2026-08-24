@@ -256,6 +256,11 @@ try {
 
   const roster = lastState(sessions[0]).players.map((player) => player.name).sort();
   assert.deepEqual(roster, specs.map((spec) => spec.name).sort());
+  const spawnSnapshot = lastState(sessions[0]);
+  const spawnPositions = new Set(
+    spawnSnapshot.players.map((player) => `${Math.round(player.x)}:${Math.round(player.y)}`),
+  );
+  assert.equal(spawnPositions.size, specs.length, "eight-player spawns must be distinct");
   assert.ok(
     sessions.every((session) => lastState(session).arenaId === "moon-garden"),
     "all eight clients must receive the first player's moon-garden arena",
@@ -278,6 +283,31 @@ try {
     () => sessions.some((session) => lastState(session).phase === "playing"),
     8000,
   );
+
+  await waitForStatus(
+    "ball holder for pass readability",
+    () => sessions.some((session) => {
+      const state = lastState(session);
+      return state.phase === "playing" && state.ballHolderId !== null && !state.ball.inFlight;
+    }),
+    8000,
+  );
+  const holderSession = sessions.find((session) => {
+    const state = lastState(session);
+    return state.ballHolderId !== null && !state.ball.inFlight;
+  })!;
+  const holderState = lastState(holderSession);
+  const passTarget = holderState.players.find(
+    (player) => player.id !== holderState.ballHolderId && player.alive,
+  );
+  assert.ok(passTarget, "a live teammate must be available for a pass");
+  holderSession.socket.emit("action", { type: "pass", targetId: passTarget.id });
+  await waitForStatus(
+    "pass flight broadcast",
+    () => sessions.some((session) => session.states.some((state) => state.ball.inFlight)),
+    4000,
+  );
+
   await waitForStatus(
     "eight-player stage transition",
     () => sessions.some((session) => ["test", "twist", "mastery"].includes(lastState(session).arenaStage)),
@@ -286,6 +316,15 @@ try {
 
   const network = await simulateJitterAndLoss(sessions);
   await delay(250);
+  const dogPlayingStates = sessions[0]!.states.filter((state) => state.phase === "playing");
+  const dogPathPositions = new Set(
+    dogPlayingStates.map((state) => `${Math.round(state.dog.x)}:${Math.round(state.dog.y)}`),
+  );
+  const dogAngles = new Set(
+    dogPlayingStates.map((state) => Math.round(state.dog.angle * 100) / 100),
+  );
+  assert.ok(dogPathPositions.size >= 4, "dog must move through a visible path");
+  assert.ok(dogAngles.size >= 2, "dog must visibly turn along the path");
   const afterNetwork = await readStatus();
   assert.ok(afterNetwork.players >= before.players + 8, "network simulation lost a player on the server");
   assert.ok(afterNetwork.connections >= before.connections + 8, "network simulation lost a connection");
@@ -328,8 +367,12 @@ try {
         clientCount: specs.length,
         version: joinedStatus.version,
         roster,
+        spawnPositions: spawnPositions.size,
         arenaId: lastState(sessions[0]).arenaId,
         arenaStages: [...new Set(sessions.map((session) => lastState(session).arenaStage))],
+        passObserved: true,
+        dogPathSamples: dogPathPositions.size,
+        dogTurnSamples: dogAngles.size,
         rejectionReason,
         network,
         stateEventsPerClient: sessions.slice(0, specs.length).map((session) => session.states.length),
