@@ -11,6 +11,15 @@ import {
   t,
 } from "../src/client/i18n.js";
 
+const sfxSource = readFileSync(resolve(process.cwd(), "src/client/audio/Sfx.ts"), "utf8");
+for (const event of ["unlock", "pass", "blink", "death", "win", "countdown", "arenaStage"]) {
+  assert.match(sfxSource, new RegExp(`${event}:`), `missing SFX event: ${event}`);
+}
+
+const styleSource = readFileSync(resolve(process.cwd(), "src/client/style.css"), "utf8");
+assert.match(styleSource, /@media \(max-width: 420px\)/, "missing narrow viewport rules");
+assert.match(styleSource, /calc\(100vw - 20px\)/, "narrow lobby must fit the viewport");
+
 for (const character of CHARACTERS) {
   const relative = character.asset.replace(/^\//, "");
   const assetPath = resolve(process.cwd(), "public", relative);
