@@ -7,14 +7,14 @@
 ## 版本證據
 
 - URL：<https://test-vccb.onrender.com>
-- Render 已驗證的內容 commit：`7cbf411`（`docs: align handoff with pushed operations gate`）
-- GitHub 後續 main commits：補充本文件、hand-off、正式方案與網路測試；不改變已驗證的遊戲 bundle
+- Render 已驗證的內容 commit：`cfb930f`（`fix: make completed rounds replayable`）
+- 公開首頁最新前端 bundle：`/assets/index-B1Iq1mcw.js`
 - 公開 `/ready`：HTTP 200，`ready: true`，測試後 `rooms: 0`、`players: 0`、`connections: 0`
 - 公開 `/metrics`：HTTP 200，包含 `shuai_gou_ready`、連線、房間與 invalid action 指標
-- `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 均正常，metrics 回應 1194 bytes
-- 公開首頁與本機 `dist/assets/index-DNgnsZ5W.js` 的 SHA-256 相同；新版動態 chunk 包含 `arenaStage`
+- `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 均正常，metrics 回應 1195 bytes，測試後房間／玩家／連線為 0
+- 公開首頁與本機 `dist/assets/index-B1Iq1mcw.js` 的 SHA-256 相同（`e9f08044dc87f8ef0015494e1f64aeffc07402021e72908e8cc733a9f4e238a2`）；新版動態 chunk 包含 `arenaStage`
 - 公開 CSS 已切換至 `index-DKzjsNtz.css`，包含 420px 以下入口收窄規則；目前桌面 viewport `1280×720` 無橫向溢出，實體 390px 仍需真人裝置確認
-- 最近一次通過公開網路測試觀測的 `/ready.startedAt`：`2026-08-24T17:55:35.409Z`
+- 最近一次通過公開驗證觀測的 `/ready.startedAt`：`2026-08-24T18:11:40.089Z`
 
 ## 已通過
 
@@ -24,7 +24,7 @@
 - `npm run test:staging:network`：真實 Render WebSocket；connect 約 682ms、join ack 約 161ms、128 個狀態樣本，間隔 p95 50ms／最大 813ms，disconnect→reconnect→重新加入通過，最終清理為 0
 - 公開瀏覽器單人練習：完成 1/3 → 2/3 → 3/3 → 練習完成
 - 公開瀏覽器雙分頁：兩位玩家以不同角色加入同一個月影庭房間，兩頁同步顯示月影庭四個月燈路標與相同玩家位置；繁中／英文切換與 8 個正式 SVG 圖示載入成功
-- 公開瀏覽器結算：實際雙人回合顯示勝者、本人存活／出局、出局原因、下一步與「準備下一局」入口
+- 公開瀏覽器結算：實際雙人月影庭回合完成後，結算流程可回到大廳；最新版本按鈕顯示 `Play again`，且測試分頁關閉後服務回到 0 房／0 人／0 連線
 
 ## 尚不能宣稱完成
 

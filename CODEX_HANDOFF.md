@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG 與繁中／英文介面切換已通過本機 QA；最新 slice 已部署到公開 Render staging 並完成公開 API／瀏覽器／重玩驗證，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換與回合後重玩入口已通過本機 QA；最新 slice 已部署到公開 Render staging 並完成公開 API／瀏覽器／重玩驗證，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
@@ -48,6 +48,7 @@
 - 第二競技場加入 teach／test／twist／mastery 四階段：伺服器依回合時間發出 `arenaStage`，月影庭切換單一路線、四月燈、斜線與全場動線；加入階段提示與短音效
 - 新增 `docs/PLAYTEST-OBSERVATION.md`，規範不熟悉規則玩家的練習房、第一局與月影庭觀察流程
 - 結算區塊加入勝者、本人存活／出局、出局原因、下一步提示與下一局入口；GameScene 結算 banner 同步顯示相同資訊
+- 回合結束後大廳按鈕會切換為 `再玩一局／Play again`；已以公開 Render staging 實際雙人回合驗證結算→大廳→重玩入口
 - 新增 `src/client/i18n.ts` 與大廳語言切換，繁中／英文覆蓋大廳、角色、競技場、練習房、HUD、階段提示與結算文字
 - 新增 `scripts/generate-character-assets.ts` 與 8 個 `public/assets/characters/char-*.svg` 正式像素圖示；`npm run test:content` 驗證素材、階段資料與雙語字串
 
@@ -132,7 +133,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 本機英文內容 smoke：通過；語言切換後角色 SVG 8/8 完整載入，練習房英文畫面完成 `1/3 → 2/3 → 3/3`，Phaser canvas 無 asset error
 - 本機結算 smoke：通過；兩名玩家實際對局後顯示勝者、本人出局、出局原因、下一步與下一局準備入口
 - 小螢幕入口 smoke：通過；390×844 下競技場選單、加入房間與練習房按鈕可見可操作，viewport 已恢復預設
-- 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標，實際雙人回合顯示勝者／出局原因／下一步／準備下一局；清理後 `/ready` 回到 0 房／0 人／0 連線
+- 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標，實際雙人回合顯示勝者／出局原因／下一步，結算後回到大廳顯示 `Play again`；清理後 `/ready` 回到 0 房／0 人／0 連線
 - 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；最新 8 人內容以公開 staging stress script 重跑，跨裝置仍待真人驗證
 - `npm run test:staging:replay` 公開 Render（最新 staging）：通過；短 replay 4 回合 × 5 秒，另完成長 replay 3 回合 × 15 秒（每回合約 139–140 actions、404–409 state events／客戶），最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:network` 公開 Render（最新 staging）：通過；connect 約 682ms、join ack 約 161ms、128 個樣本，狀態間隔 p95 50ms／最大 813ms，真實 disconnect／reconnect／重新加入與清理成功；第一次部署後執行曾遇到 staging 重啟，重試通過
@@ -159,10 +160,10 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
 - Cloudflare 快速隧道無 SLA；關機即斷
-- 本輪遊戲內容部署基線為 GitHub `7cbf411`，網路 gate、月影庭 evidence、390px 入口加固與 health gate 後續已推送至 `1e1a7a0`；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
+- 本輪遊戲內容部署基線為 GitHub `cfb930f`，包含回合後重玩入口；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則
 - 角色描述仍是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞或特殊回合
-- 第二競技場已完成同機 8 人、公開長 replay 與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與真人長時間重玩意願驗證
+- 第二競技場已完成同機 8 人、公開長 replay 與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與真人長時間重玩意願驗證；公開回合後 `Play again` 入口已補齊，但仍需真人確認是否願意立即重開
 
 ## Next Safest Task
 
