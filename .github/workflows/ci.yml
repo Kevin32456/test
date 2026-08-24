@@ -27,5 +27,26 @@ jobs:
       - name: Run focused server tests
         run: npm test
 
+      - name: Run content tests
+        run: npm run test:content
+
       - name: Build production bundle
         run: npm run build
+
+      - name: Start local production server
+        run: |
+          NODE_ENV=production HOST=127.0.0.1 PORT=4318 npm run start:prod > server.log 2>&1 &
+          echo $! > server.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4318/ready > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat server.log
+          exit 1
+
+      - name: Verify complete arena stage sequence
+        env:
+          STAGING_URL: http://127.0.0.1:4318
+        run: npm run test:staging:stages

@@ -83,6 +83,7 @@
 - `src/client/scenes/PracticeScene.ts` — 單人練習房的教學步驟、練習搭檔與非致命追球狗
 - `src/shared/characters.ts` — 角色選角風格與描述資料
 - `tests/server.test.ts`、`tests/staging.smoke.ts`、`tests/staging.stress.ts`、`tests/staging.stages.ts`、`.github/workflows/ci.yml` — focused tests、staging smoke、8 人 stress／階段 gate、CI
+- GitHub Actions CI 已加入 `npm run test:content` 與本機 production `npm run test:staging:stages`；後續內容變更會先經過雙語／素材與四階段同步 gate
 - `render.yaml`、`Dockerfile`、`package.json` — Render／Docker 編譯後啟動設定
 - `STEAM_RELEASE_CHECKLIST.md` — Steamworks、SteamPipe、Windows 簽章與商店素材缺口
 - `docs/CONTENT-ROADMAP.md` — 上架前內容里程碑與 cut list
