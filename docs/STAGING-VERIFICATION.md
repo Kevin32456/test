@@ -24,6 +24,7 @@
 - `npm run test:staging:stages`：公開 Render 8 人月影庭持續對局直到收到完整 `teach → test → twist → mastery`，stageSeen 四階段完整、驗證當下 8 人／8 連線，測試後清理為 0
 - `npm run test:staging:network`：真實 Render WebSocket；connect 約 682ms、join ack 約 161ms、128 個狀態樣本，間隔 p95 50ms／最大 813ms，disconnect→reconnect→重新加入通過，最終清理為 0
 - `723eb9e` 公開 redeploy 回歸：8 人月影庭完整 `teach → test → twist → mastery`；network connect 662ms、join ack 159ms、p95 50ms／最大 813ms；4 回合 replay、8 人滿房／第 9 人拒絕、pass flight、狗路徑與重連清理均通過，最終 0 房／0 人／0 連線
+- `npm run test:staging:long`：公開 Render 固定 3 回合 × 15 秒通過；每回合 139、139、140 actions，約 406–408 個 state events／客戶，測試前後房間／玩家／連線均為 0
 - 公開瀏覽器單人練習：完成 1/3 → 2/3 → 3/3 → 練習完成
 - 本機 Electron `npm run test:layout`：通過；`390×844` 下繁中／英文大廳與結算文字 fixture 均無水平溢位／文字裁切，語言、競技場、房間、暱稱、練習與加入控制項均在視窗內；實體手機仍待測
 - 公開瀏覽器雙分頁：兩位玩家以不同角色加入同一個月影庭房間，兩頁同步顯示月影庭四個月燈路標與相同玩家位置；繁中／英文切換與 8 個正式 SVG 圖示載入成功
