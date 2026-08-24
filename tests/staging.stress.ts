@@ -238,7 +238,10 @@ const before = await readStatus();
 const sessions: Session[] = [];
 
 try {
-  const joined = await Promise.all(specs.map(connectAndJoin));
+  // 先讓 FULL-A 成為確定的第一位玩家，才能驗證第一位玩家的 arena 選擇勝出；
+  // 其餘 7 人仍並行加入，保留滿房與高併發壓力。
+  const firstJoined = await connectAndJoin(specs[0]);
+  const joined = [firstJoined, ...(await Promise.all(specs.slice(1).map(connectAndJoin)))];
   sessions.push(...joined);
 
   const joinedStatus = await waitForStatus(
@@ -300,7 +303,8 @@ try {
       status.connections === before.connections,
   );
 
-  const recycled = await Promise.all(specs.map(connectAndJoin));
+  const recycledFirst = await connectAndJoin(specs[0]);
+  const recycled = [recycledFirst, ...(await Promise.all(specs.slice(1).map(connectAndJoin)))];
   sessions.push(...recycled);
   const recycledStatus = await waitForStatus(
     "eight-player recycled join",
