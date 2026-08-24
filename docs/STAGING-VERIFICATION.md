@@ -7,14 +7,14 @@
 ## 版本證據
 
 - URL：<https://test-vccb.onrender.com>
-- Render 已驗證的最後一個功能性 deployment commit：`290303f`（`test: verify complete arena stage sequence`）；遊戲 bundle 仍包含 `cfb930f` 的重玩入口修正。之後的 `085c5fa` 更新 CI／交接文件，`7ddad85` 更新部署可觀測性，不改遊戲內容。
-- 公開首頁最新前端 bundle：`/assets/index-B1Iq1mcw.js`
+- Render 已驗證的最後一個功能性 deployment commit：`723eb9e`（`feat: add adaptive game music and audio toggle`）；包含 `290303f` 的完整階段 gate 與 `cfb930f` 的重玩入口修正。`7ddad85` 與 `7d17a20` 是部署可觀測性／交接文件更新。
+- 公開首頁最新前端 bundle：`/assets/index-ifvnWVxG.js`，已確認包含聲音開關與 6 種 music mode
 - 公開 `/ready`：HTTP 200，`ready: true`，測試後 `rooms: 0`、`players: 0`、`connections: 0`
 - 公開 `/metrics`：HTTP 200，包含 `shuai_gou_build_info`、`shuai_gou_ready`、連線、房間與 invalid action 指標
-- `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：通過；公開服務已切換至 commit `7ddad854b2c09b5149721561dac197a3fb7e2bc5`，`/health`、`/ready`、`/metrics` 均正常，測試後房間／玩家／連線為 0
-- 公開首頁與本機 `dist/assets/index-B1Iq1mcw.js` 的 SHA-256 相同（`e9f08044dc87f8ef0015494e1f64aeffc07402021e72908e8cc733a9f4e238a2`）；新版動態 chunk 包含 `arenaStage`
+- `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：在 `723eb9e` 功能部署後通過；當時公開服務回報 commit `723eb9ec1659637e2af885685cf68ff75cb76e69`，`/health`、`/ready`、`/metrics` 均正常，測試後房間／玩家／連線為 0
+- 公開首頁與本機 `dist/assets/index-ifvnWVxG.js` 的 SHA-256 相同（`32917EEAC428C76C28C2DA099DDEBE385063F65003CF54A304FC1535FF73FA77`）；新版包含 `arenaStage` 與 audio toggle
 - 公開 CSS 已切換至 `index-DKzjsNtz.css`，包含 420px 以下入口收窄規則；目前桌面 viewport `1280×720` 無橫向溢出，實體 390px 仍需真人裝置確認
-- 最後一次功能性公開驗證觀測的 `/ready.startedAt`：`2026-08-24T18:31:13.024Z`；最新運維部署的 `/ready.startedAt`：`2026-08-24T18:51:22.362Z`
+- 最新功能性公開驗證觀測的 `/ready.startedAt`：`2026-08-24T19:06:43.384Z`
 
 ## 已通過
 
@@ -23,6 +23,7 @@
 - `npm run test:staging:replay`：公開短回合 4 回合 × 5 秒通過；另以 3 回合 × 15 秒長 replay 通過，每回合約 139–140 actions、404–409 state events／客戶，最終清理為 0
 - `npm run test:staging:stages`：公開 Render 8 人月影庭持續對局直到收到完整 `teach → test → twist → mastery`，stageSeen 四階段完整、驗證當下 8 人／8 連線，測試後清理為 0
 - `npm run test:staging:network`：真實 Render WebSocket；connect 約 682ms、join ack 約 161ms、128 個狀態樣本，間隔 p95 50ms／最大 813ms，disconnect→reconnect→重新加入通過，最終清理為 0
+- `723eb9e` 公開 redeploy 回歸：8 人月影庭完整 `teach → test → twist → mastery`；network connect 662ms、join ack 159ms、p95 50ms／最大 813ms；4 回合 replay、8 人滿房／第 9 人拒絕、pass flight、狗路徑與重連清理均通過，最終 0 房／0 人／0 連線
 - 公開瀏覽器單人練習：完成 1/3 → 2/3 → 3/3 → 練習完成
 - 本機 Electron `npm run test:layout`：通過；`390×844` 下繁中／英文大廳與結算文字 fixture 均無水平溢位／文字裁切，語言、競技場、房間、暱稱、練習與加入控制項均在視窗內；實體手機仍待測
 - 公開瀏覽器雙分頁：兩位玩家以不同角色加入同一個月影庭房間，兩頁同步顯示月影庭四個月燈路標與相同玩家位置；繁中／英文切換與 8 個正式 SVG 圖示載入成功

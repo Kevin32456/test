@@ -146,6 +146,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run test:staging:replay` 公開 Render（最新 staging）：通過；短 replay 4 回合 × 5 秒，另完成長 replay 3 回合 × 15 秒（每回合約 139–140 actions、404–409 state events／客戶），最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:network` 公開 Render（最新 staging）：通過；connect 約 682ms、join ack 約 161ms、128 個樣本，狀態間隔 p95 50ms／最大 813ms，真實 disconnect／reconnect／重新加入與清理成功；第一次部署後執行曾遇到 staging 重啟，重試通過
 - 公開 Render 運維健康檢查（`7ddad85`）：通過；`/ready` 與 `/metrics` 回報實際 commit `7ddad854b2c09b5149721561dac197a3fb7e2bc5`，`build_info` 可用於部署／回滾辨識，測試後 0 房／0 人／0 連線
+- `723eb9e` 公開功能部署回歸：通過；最新 bundle 含 audio toggle／6 種 music mode，8 人月影庭四階段、network 662ms connect／159ms join／p95 50ms、4 回合 replay、8 人 stress／重連／清理均通過
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
@@ -169,11 +170,11 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
 - Cloudflare 快速隧道無 SLA；關機即斷
-- 本輪遊戲內容部署基線為 GitHub `290303f`，包含回合後重玩入口與完整階段 gate；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
+- 本輪遊戲內容部署基線為 GitHub `723eb9e`，包含回合後重玩入口、完整階段 gate、自製程序化音樂與聲音開關；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則
 - 角色描述仍是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞或特殊回合
 - 第二競技場已完成同機 8 人、公開長 replay 與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與真人長時間重玩意願驗證；公開回合後 `Play again` 入口已補齊，但仍需真人確認是否願意立即重開
 
 ## Next Safest Task
 
-下一個最安全任務是安排至少一名不熟悉規則的玩家依 `docs/PLAYTEST-OBSERVATION.md` 完成練習房／第一局觀察，並以兩台以上不同網路裝置測試月影庭的出生點、傳球可讀性、狗甩尾、延遲與重連。正式常駐伺服器、外部告警／log drain、正式音樂／混音、Steam App ID／SteamPipe／簽章仍未完成。詳見 `docs/CONTENT-ROADMAP.md`、`docs/STAGING-VERIFICATION.md` 與 `STEAM_RELEASE_CHECKLIST.md`。
+下一個最安全任務是安排至少一名不熟悉規則的玩家依 `docs/PLAYTEST-OBSERVATION.md` 完成練習房／第一局觀察，並以兩台以上不同網路裝置測試月影庭的出生點、傳球可讀性、狗甩尾、延遲、音量與重連。正式常駐伺服器、外部告警／log drain、真人音量／混音驗收、Steam App ID／SteamPipe／簽章仍未完成。詳見 `docs/CONTENT-ROADMAP.md`、`docs/STAGING-VERIFICATION.md` 與 `STEAM_RELEASE_CHECKLIST.md`。
