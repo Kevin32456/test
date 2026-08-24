@@ -11,7 +11,7 @@
 - 公開首頁最新前端 bundle：`/assets/index-B1Iq1mcw.js`
 - 公開 `/ready`：HTTP 200，`ready: true`，測試後 `rooms: 0`、`players: 0`、`connections: 0`
 - 公開 `/metrics`：HTTP 200，包含 `shuai_gou_ready`、連線、房間與 invalid action 指標
-- `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 均正常，metrics 回應 1195 bytes，測試後房間／玩家／連線為 0
+- `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 均正常，測試後房間／玩家／連線為 0
 - 公開首頁與本機 `dist/assets/index-B1Iq1mcw.js` 的 SHA-256 相同（`e9f08044dc87f8ef0015494e1f64aeffc07402021e72908e8cc733a9f4e238a2`）；新版動態 chunk 包含 `arenaStage`
 - 公開 CSS 已切換至 `index-DKzjsNtz.css`，包含 420px 以下入口收窄規則；目前桌面 viewport `1280×720` 無橫向溢出，實體 390px 仍需真人裝置確認
 - 最近一次通過公開驗證觀測的 `/ready.startedAt`：`2026-08-24T18:11:40.089Z`
@@ -21,6 +21,7 @@
 - `npm run test:staging`：4 客戶、雙房間隔離、斷線清理與重新加入
 - `npm run test:staging:stress`：8 人月影庭、第 9 人拒絕、8 個 distinct spawn、真實 pass flight、狗路徑 130 個位置／58 個轉向樣本、150/192 action 送出、42/192 應用層丟失、最大延遲 3624ms、8 人重連與清理
 - `npm run test:staging:replay`：公開短回合 4 回合 × 5 秒通過；另以 3 回合 × 15 秒長 replay 通過，每回合約 139–140 actions、404–409 state events／客戶，最終清理為 0
+- `npm run test:staging:stages`：公開 Render 8 人月影庭持續對局直到收到完整 `teach → test → twist → mastery`，stageSeen 四階段完整、驗證當下 8 人／8 連線，測試後清理為 0
 - `npm run test:staging:network`：真實 Render WebSocket；connect 約 682ms、join ack 約 161ms、128 個狀態樣本，間隔 p95 50ms／最大 813ms，disconnect→reconnect→重新加入通過，最終清理為 0
 - 公開瀏覽器單人練習：完成 1/3 → 2/3 → 3/3 → 練習完成
 - 公開瀏覽器雙分頁：兩位玩家以不同角色加入同一個月影庭房間，兩頁同步顯示月影庭四個月燈路標與相同玩家位置；繁中／英文切換與 8 個正式 SVG 圖示載入成功

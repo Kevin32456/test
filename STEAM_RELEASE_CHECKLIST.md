@@ -7,7 +7,7 @@
 - 版本：`0.4.0`
 - Windows target：`x64 portable`
 - 執行檔：`release/Shuai-Gou-0.4.0-x64.exe`
-- SHA-256：`AE01E7A1AA10461B8324E01292B07C16E8100431D7A3F8ED58149124C1B13F6D`
+- SHA-256：`1B60CEB452932691277369E56300CBE6F04B2C7DBE81333FD1AE117A932094F5`
 - Electron App ID：`com.kevin32456.shuaigou`
 - 本機 packaged smoke：通過；內嵌 server `/health` 回傳 200、`ready: true`、`phase: lobby`
 - 遠端 staging：[`https://test-vccb.onrender.com`](https://test-vccb.onrender.com)

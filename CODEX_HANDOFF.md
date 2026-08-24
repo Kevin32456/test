@@ -37,6 +37,7 @@
 - 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開 bundle hash 與本機 `dist` 一致，`/ready`、`/metrics` 與新版場地／練習房均已驗證
 - 新增 `tests/staging.stress.ts` 與 `npm run test:staging:stress`：8 人滿房、第 9 人拒絕、應用層延遲／抖動／丟失 action、斷線清理與 8 人重連
 - 新增 `tests/staging.network.ts` 與 `npm run test:staging:network`：量測真實 staging WebSocket 的連線／加入時間、狀態間隔 jitter，並驗證 disconnect→reconnect→重新加入
+- 新增 `tests/staging.stages.ts` 與 `npm run test:staging:stages`：8 人月影庭持續對局，驗證所有客戶收到完整 `teach → test → twist → mastery` 階段序列
 - 瀏覽器 QA 修正遠端模式空 URL 誤連目前頁面的問題；公開版已驗證空 URL 阻止加入、有效 Render URL 可加入，console 無 error/warn
 - `GameScene`／`PracticeScene` 會載入專案內 8 個正式 SVG 角色圖示；保留 canvas fallback，避免素材載入失敗阻斷 playtest
 - 大廳新增可收合／可重看的玩法指南，倒數畫面補上目標與主要操作提示，結算狀態明確顯示勝者與下一局
@@ -81,7 +82,7 @@
 - `scripts/generate-character-assets.ts`、`public/assets/characters/` — 正式角色圖示與可重建素材流程
 - `src/client/scenes/PracticeScene.ts` — 單人練習房的教學步驟、練習搭檔與非致命追球狗
 - `src/shared/characters.ts` — 角色選角風格與描述資料
-- `tests/server.test.ts`、`tests/staging.smoke.ts`、`tests/staging.stress.ts`、`.github/workflows/ci.yml` — focused tests、staging smoke、8 人 stress、CI
+- `tests/server.test.ts`、`tests/staging.smoke.ts`、`tests/staging.stress.ts`、`tests/staging.stages.ts`、`.github/workflows/ci.yml` — focused tests、staging smoke、8 人 stress／階段 gate、CI
 - `render.yaml`、`Dockerfile`、`package.json` — Render／Docker 編譯後啟動設定
 - `STEAM_RELEASE_CHECKLIST.md` — Steamworks、SteamPipe、Windows 簽章與商店素材缺口
 - `docs/CONTENT-ROADMAP.md` — 上架前內容里程碑與 cut list
@@ -110,7 +111,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm test`：通過（payload validation、倒數離場重置）
 - `npm run typecheck`：通過
 - `npm run build`：通過；初始 entry 約 54 KB，Phaser deferred chunk 約 1.48 MB
-- `npm run desktop:build`：通過；重新產生含練習房的 `release/Shuai-Gou-0.4.0-x64.exe`（105,326,025 bytes，SHA256 `C8A4370BE72E9A8617A15D01F5935024997C836F651FB9EEC06F7BE36923002C`）
+- `npm run desktop:build`：通過；重新產生含練習房與最新重玩入口的 `release/Shuai-Gou-0.4.0-x64.exe`（105,336,570 bytes，SHA256 `1B60CEB452932691277369E56300CBE6F04B2C7DBE81333FD1AE117A932094F5`）
 - packaged unpacked runtime smoke：通過；動態 loopback port `/health` 200、phase `lobby`
 - portable runtime smoke：通過；含練習房的 portable 首次解包後動態 loopback port `/health` 200、`ready: true`、phase `lobby`，測試程序已清理；artifact Authenticode 為 `NotSigned`
 - 本機內容瀏覽器 smoke：通過；玩法指南可收合／重開，兩名測試玩家可加入、倒數後進入 Phaser canvas 對局，清理後 server `rooms:0`／`players:0`／`connections:0`
@@ -122,6 +123,8 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 公開 Render smoke（最新 staging）：通過；`/ready` 與 `/health` 為 JSON，4 客戶／雙房間隔離、斷線清理與 4 角色重連成功；測後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production：通過；8 人同房、192 個模擬 action、48 個丟失、8 人重連與清理成功
 - `npm run test:staging:stress` 公開 Render（最新 staging）：通過；8 人月影庭同房、第 9 人拒絕、8 個 distinct spawn、真實 pass flight、狗路徑 130 個位置／58 個轉向樣本、150/192 action 送出、42/192 丟失、最大延遲 3624ms、8/8 持續收到狀態，重連與清理成功
+- `npm run test:staging:stages` 本機 production：通過；8 人同房直到完整 teach／test／twist／mastery，8 人／8 連線持續到 mastery，清理成功
+- `npm run test:staging:stages` 公開 Render（最新 staging）：通過；8 人月影庭收到完整 teach／test／twist／mastery，驗證當下 8 人／8 連線，清理成功
 - `npm run typecheck`：通過；第二競技場的 shared/server/client arena contract 無型別錯誤
 - `npm test`：通過；arena join/action 驗證、房間 arena snapshot 與既有倒數離場測試通過
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯

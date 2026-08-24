@@ -19,6 +19,7 @@
     "test:staging": "tsx tests/staging.smoke.ts",
     "test:staging:network": "tsx tests/staging.network.ts",
     "test:staging:replay": "tsx tests/staging.replay.ts",
+    "test:staging:stages": "tsx tests/staging.stages.ts",
     "test:staging:stress": "tsx tests/staging.stress.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "desktop:dev": "npm run build && electron .",
