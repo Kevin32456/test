@@ -53,6 +53,7 @@
 - 回合結束後大廳按鈕會切換為 `再玩一局／Play again`；已以公開 Render staging 實際雙人回合驗證結算→大廳→重玩入口
 - 新增 `src/client/i18n.ts` 與大廳語言切換，繁中／英文覆蓋大廳、角色、競技場、練習房、HUD、階段提示與結算文字
 - 新增 `scripts/generate-character-assets.ts` 與 8 個 `public/assets/characters/char-*.svg` 正式像素圖示；`npm run test:content` 驗證素材、階段資料與雙語字串
+- 新增 `src/client/audio/AudioEngine.ts`：自製程序化大廳／練習／回合階段音樂、SFX／music bus、主音量與繁中／英文聲音開關；音樂設計與真人驗收界線記錄於 `docs/AUDIO-DESIGN.md`
 
 ## 核心規則
 
@@ -132,6 +133,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯
 - `npm run test:content`：通過；8 個角色 SVG、2 個競技場、teach／test／twist／mastery 順序與繁中／英文字串完整
 - `npm run test:layout`：通過；Electron `390×844` 下繁中／英文大廳與結算文字 fixture 均無水平溢位／文字裁切，主要控制項均在視窗內；實體手機仍待測
+- 音樂層回歸：通過；`npm run build`、`npm run test:content`、`npm test`、`npm run test:layout`，以及本機 smoke／8 人階段／network／replay／stress gate 均通過
 - `npm run test:staging:replay`：通過；本機 3 局 × 3 秒重玩、每局多人加入／playing／Moon Garden／斷線清理，最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production（新版 arena stage）：通過；8 人同房、第一位選月影庭後 8/8 收到 `moon-garden`、第 9 人拒絕、192 個延遲／丟失 action、stage 已進入 `test`、斷線與重連清理成功
 - 本機第二競技場瀏覽器 smoke：通過；第一位玩家選月影庭後，第二位以朱印圓場加入仍被房間快照校正為月影庭；大廳切換可同步到兩頁，兩頁 canvas 均出現月庭四路標／菱形動線，console 無 error/warn

@@ -1,20 +1,5 @@
 import type { ArenaStage } from "@shared/arenas";
-
-let ctx: AudioContext | null = null;
-
-function getCtx(): AudioContext | null {
-  try {
-    if (!ctx) {
-      ctx = new AudioContext();
-    }
-    if (ctx.state === "suspended") {
-      void ctx.resume();
-    }
-    return ctx;
-  } catch {
-    return null;
-  }
-}
+import { playSfxTone, unlockAudio } from "./AudioEngine";
 
 function tone(
   freq: number,
@@ -22,24 +7,11 @@ function tone(
   type: OscillatorType = "square",
   volume = 0.07,
 ) {
-  const ac = getCtx();
-  if (!ac) return;
-
-  const osc = ac.createOscillator();
-  const gain = ac.createGain();
-  osc.type = type;
-  osc.frequency.value = freq;
-  gain.gain.value = volume;
-  osc.connect(gain);
-  gain.connect(ac.destination);
-  const end = ac.currentTime + durationSec;
-  gain.gain.exponentialRampToValueAtTime(0.001, end);
-  osc.start();
-  osc.stop(end);
+  playSfxTone(freq, durationSec, type, volume);
 }
 
 export const Sfx = {
-  unlock: () => getCtx()?.resume(),
+  unlock: () => unlockAudio(),
   pass: () => tone(520, 0.07, "triangle"),
   blink: () => tone(920, 0.05, "sine", 0.05),
   death: () => tone(160, 0.18, "sawtooth", 0.06),

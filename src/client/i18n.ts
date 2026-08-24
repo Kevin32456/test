@@ -16,6 +16,8 @@ type TranslationKey =
   | "localServer"
   | "remoteServer"
   | "remoteUrl"
+  | "audioOn"
+  | "audioOff"
   | "arenaLabel"
   | "roomLabel"
   | "roomPlaceholder"
@@ -106,6 +108,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     localServer: "目前伺服器（本機／此頁面）",
     remoteServer: "遠端伺服器",
     remoteUrl: "遠端伺服器 URL",
+    audioOn: "聲音：開",
+    audioOff: "聲音：關",
     arenaLabel: "競技場",
     roomLabel: "房間碼",
     roomPlaceholder: "4–12 碼英數字",
@@ -195,6 +199,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     localServer: "Current server (this page)",
     remoteServer: "Remote server",
     remoteUrl: "Remote server URL",
+    audioOn: "Sound: On",
+    audioOff: "Sound: Off",
     arenaLabel: "Arena",
     roomLabel: "Room code",
     roomPlaceholder: "4–12 letters or numbers",

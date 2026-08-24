@@ -64,7 +64,7 @@ async function inspectLobby(window, locale) {
         return element.scrollWidth > element.clientWidth + 2;
       })
       .map((element) => element.id || element.className || element.tagName);
-    const required = ['locale-input', 'arena-input', 'room-input', 'name-input', 'practice-btn', 'join-btn'];
+    const required = ['locale-input', 'arena-input', 'room-input', 'name-input', 'audio-toggle', 'practice-btn', 'join-btn'];
     const controls = Object.fromEntries(required.map((id) => {
       const element = document.getElementById(id);
       const rect = element?.getBoundingClientRect();
@@ -122,6 +122,20 @@ async function hideResultFixture(window) {
   await window.webContents.executeJavaScript("document.querySelector('#result-panel').hidden = true");
 }
 
+async function exerciseAudioToggle(window) {
+  return window.webContents.executeJavaScript(`(() => {
+    const toggle = document.querySelector('#audio-toggle');
+    const before = toggle?.getAttribute('aria-pressed');
+    toggle?.click();
+    const afterFirst = toggle?.getAttribute('aria-pressed');
+    toggle?.click();
+    const afterSecond = toggle?.getAttribute('aria-pressed');
+    // Leave the test page muted so no music timer survives teardown.
+    if (toggle?.getAttribute('aria-pressed') === 'true') toggle.click();
+    return { present: Boolean(toggle), before, afterFirst, afterSecond };
+  })()`);
+}
+
 async function main() {
   let serverModule = null;
   let window = null;
@@ -147,6 +161,11 @@ async function main() {
     await window.loadURL(`http://127.0.0.1:${port}/`);
     await window.webContents.executeJavaScript("document.fonts?.ready");
     await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const audioToggle = await exerciseAudioToggle(window);
+    assert.equal(audioToggle.present, true, 'audio toggle is missing');
+    assert.notEqual(audioToggle.before, audioToggle.afterFirst, 'audio toggle did not change state');
+    assert.equal(audioToggle.before, audioToggle.afterSecond, 'audio toggle did not restore state');
 
     const reports = [];
     for (const locale of ["zh-Hant", "en"]) {

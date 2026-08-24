@@ -15,6 +15,14 @@ const sfxSource = readFileSync(resolve(process.cwd(), "src/client/audio/Sfx.ts")
 for (const event of ["unlock", "pass", "blink", "death", "win", "countdown", "arenaStage"]) {
   assert.match(sfxSource, new RegExp(`${event}:`), `missing SFX event: ${event}`);
 }
+const audioSource = readFileSync(resolve(process.cwd(), "src/client/audio/AudioEngine.ts"), "utf8");
+for (const mode of ["lobby", "practice", "teach", "test", "twist", "mastery"]) {
+  assert.match(audioSource, new RegExp(`${mode}:`), `missing music mode: ${mode}`);
+}
+assert.match(audioSource, /setAudioEnabled/);
+assert.match(audioSource, /setMusicMode/);
+const mainSource = readFileSync(resolve(process.cwd(), "src/client/main.ts"), "utf8");
+assert.match(mainSource, /audio-toggle/, "missing player audio toggle");
 
 const styleSource = readFileSync(resolve(process.cwd(), "src/client/style.css"), "utf8");
 assert.match(styleSource, /@media \(max-width: 420px\)/, "missing narrow viewport rules");

@@ -22,6 +22,12 @@ import "./fonts.css";
 import "./style.css";
 import { loadPixelFont } from "./loadPixelFont";
 import {
+  isAudioEnabled,
+  setAudioEnabled,
+  setMusicMode,
+  unlockAudio,
+} from "./audio/AudioEngine";
+import {
   arenaText,
   characterText,
   getLocale,
@@ -92,6 +98,7 @@ overlay.innerHTML = `
         <input id="server-url-input" type="url" placeholder="https://你的-tunnel.trycloudflare.com" />
       </div>
     </div>
+    <button id="audio-toggle" class="secondary-button audio-toggle" type="button" aria-pressed="true"></button>
     <label id="arena-label" class="field-label" for="arena-input"></label>
     <select id="arena-input" aria-describedby="arena-description"></select>
     <p id="arena-description" class="arena-description"></p>
@@ -122,6 +129,7 @@ const connectionMode = overlay.querySelector("#connection-mode") as HTMLSelectEl
 const localeInput = overlay.querySelector("#locale-input") as HTMLSelectElement;
 const remoteUrlField = overlay.querySelector("#remote-url-field") as HTMLDivElement;
 const serverUrlInput = overlay.querySelector("#server-url-input") as HTMLInputElement;
+const audioToggle = overlay.querySelector("#audio-toggle") as HTMLButtonElement;
 const arenaSelect = overlay.querySelector("#arena-input") as HTMLSelectElement;
 const arenaDescription = overlay.querySelector("#arena-description") as HTMLParagraphElement;
 const roomInput = overlay.querySelector("#room-input") as HTMLInputElement;
@@ -162,6 +170,7 @@ guideDetails.addEventListener("toggle", () => {
 
 const savedLocale = readStoredValue("shuai-gou.locale");
 if (savedLocale === "en") setLocale("en");
+if (readStoredValue("shuai-gou.audio") === "off") setAudioEnabled(false);
 localeInput.value = getLocale();
 
 const savedConnectionMode = readStoredValue("shuai-gou.connection-mode");
@@ -217,6 +226,8 @@ function applyLocale() {
   joinBtn.textContent = t("join");
   startBtn.textContent = t("start");
   practiceBtn.textContent = t("practice");
+  audioToggle.textContent = t(isAudioEnabled() ? "audioOn" : "audioOff");
+  audioToggle.setAttribute("aria-pressed", String(isAudioEnabled()));
   buildArenaSelect();
   buildCharacterGrid();
   renderCharacterGrid(latestSnapshot);
@@ -507,6 +518,7 @@ function handlePracticeExit() {
   showOverlay();
   practiceBtn.disabled = hasJoined || isJoining;
   lobbyStatus.textContent = t("practiceExit");
+  setMusicMode("lobby");
   renderCharacterGrid(latestSnapshot);
 }
 
@@ -576,6 +588,9 @@ subscribeState((snapshot) => {
 joinBtn.addEventListener("click", () => {
   if (hasJoined || isJoining) return;
 
+  unlockAudio();
+  setMusicMode("lobby");
+
   const roomCode = normalizeRoomCode(roomInput.value);
   if (!roomCode) {
     lobbyStatus.textContent = t("invalidRoom");
@@ -630,6 +645,8 @@ startBtn.addEventListener("click", () => {
 
 practiceBtn.addEventListener("click", () => {
   if (hasJoined || isJoining || isInPractice) return;
+  unlockAudio();
+  setMusicMode("practice");
   isInPractice = true;
   hideOverlay();
   void ensurePhaser(false).then(() => {
@@ -642,6 +659,17 @@ practiceBtn.addEventListener("click", () => {
     phaserGame.scene.stop("GameScene");
     phaserGame.scene.start("PracticeScene", { characterId: selectedCharacterId });
   });
+});
+
+audioToggle.addEventListener("click", () => {
+  const enabled = !isAudioEnabled();
+  setAudioEnabled(enabled);
+  storeValue("shuai-gou.audio", enabled ? "on" : "off");
+  if (enabled) {
+    unlockAudio();
+    setMusicMode("lobby");
+  }
+  applyLocale();
 });
 
 export { latestSnapshot as getLatestSnapshot, playerId as getPlayerId };

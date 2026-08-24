@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { Sfx } from "../audio/Sfx";
+import { setMusicMode } from "../audio/AudioEngine";
 import { expLerp, expLerpAngle } from "../interpolation";
 import { CHARACTERS, getCharacter } from "@shared/characters";
 import { GAME, arenaCenter } from "@shared/constants";
@@ -81,6 +82,7 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     Sfx.unlock();
+    setMusicMode("teach");
     this.drawArena(DEFAULT_ARENA_ID, "teach");
 
     for (const c of CHARACTERS) {
@@ -182,6 +184,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   shutdown() {
+    setMusicMode("lobby");
     this.unsubState?.();
     this.unsubState = null;
     this.prevSnapshot = null;
@@ -278,6 +281,7 @@ export class GameScene extends Phaser.Scene {
     this.arenaLayer?.destroy();
     this.arenaId = arenaId;
     this.arenaStage = stage;
+    setMusicMode(stage);
 
     const arena = getArena(arenaId);
     const palette = arena.palette;
@@ -587,6 +591,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.playSnapshotSfx(snapshot);
+
+    if (snapshot.phase === "ended" || snapshot.phase === "lobby") {
+      setMusicMode("lobby");
+    } else {
+      setMusicMode(this.arenaStage);
+    }
 
     if (snapshot.matchSeq !== this.lastMatchSeq) {
       this.lastMatchSeq = snapshot.matchSeq;

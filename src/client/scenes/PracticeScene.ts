@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { Sfx } from "../audio/Sfx";
+import { setMusicMode } from "../audio/AudioEngine";
 import { CHARACTERS, getCharacter } from "@shared/characters";
 import {
   GAME,
@@ -101,6 +102,7 @@ export class PracticeScene extends Phaser.Scene {
     this.pulseT = 0;
 
     Sfx.unlock();
+    setMusicMode("practice");
     this.drawArena();
     this.createTextures();
     this.createActors();
@@ -110,6 +112,7 @@ export class PracticeScene extends Phaser.Scene {
   }
 
   shutdown() {
+    setMusicMode("lobby");
     this.input.off("pointerdown", this.handlePointerDown, this);
     this.input.keyboard?.off("keydown-SPACE", this.handleSpace, this);
     this.input.keyboard?.off("keydown-ESC", this.handleEscape, this);

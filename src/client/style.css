@@ -326,6 +326,11 @@ body {
   background: #2a3048;
 }
 
+.audio-toggle {
+  margin: -2px 0 12px;
+  text-align: left;
+}
+
 /* ===== 分節標籤（既視感的「—」對稱線） ===== */
 
 .section-label {
