@@ -32,6 +32,7 @@
 - join 邊界拒絕未知角色 ID；玩家名單改用 text node 渲染，避免遠端暱稱注入 HTML
 - staging 改用 `dist-server` 編譯結果啟動；新增 `/ready`、版本／uptime／房間／連線狀態
 - 新增結構化 JSON server log（啟動、連線、加入拒絕／成功、斷線 reason）與 `npm run test:staging`
+- 新增 `/metrics`、graceful shutdown、process error log 與 `docs/OPERATIONS.md`；正式方案維持單 instance，回滾以 Render previous deploy 或 `git revert` 為準
 - 已取得 Render staging URL：`https://test-vccb.onrender.com`；目前 `/ready` 仍是舊啟動時間，最新本機 slice 尚未重新部署，需登入 Render 後手動 Deploy latest commit
 - 新增 `tests/staging.stress.ts` 與 `npm run test:staging:stress`：8 人滿房、第 9 人拒絕、應用層延遲／抖動／丟失 action、斷線清理與 8 人重連
 - 瀏覽器 QA 修正遠端模式空 URL 誤連目前頁面的問題；公開版已驗證空 URL 阻止加入、有效 Render URL 可加入，console 無 error/warn
@@ -122,6 +123,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm test`：通過；arena join/action 驗證、房間 arena snapshot 與既有倒數離場測試通過
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯
 - `npm run test:content`：通過；8 個角色 SVG、2 個競技場、teach／test／twist／mastery 順序與繁中／英文字串完整
+- `npm run test:staging:replay`：通過；本機 3 局 × 3 秒重玩、每局多人加入／playing／Moon Garden／斷線清理，最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production（新版 arena stage）：通過；8 人同房、第一位選月影庭後 8/8 收到 `moon-garden`、第 9 人拒絕、192 個延遲／丟失 action、stage 已進入 `test`、斷線與重連清理成功
 - 本機第二競技場瀏覽器 smoke：通過；第一位玩家選月影庭後，第二位以朱印圓場加入仍被房間快照校正為月影庭；大廳切換可同步到兩頁，兩頁 canvas 均出現月庭四路標／菱形動線，console 無 error/warn
 - 本機階段畫面 smoke：通過；canvas 顯示月影庭 teach 階段的單一路線、亮／暗月燈與階段文字提示，兩頁 console 無 error/warn
@@ -150,6 +152,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run test:staging:stress` 的延遲／抖動／丟失是測試客戶端 action 模擬，不等同於作業系統或路由器層的封包損失
 - 8 分頁瀏覽器 QA 仍是同一台機器／網路，尚未取代 8 台不同裝置／網路的真人對局證據
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
+- `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
 - Cloudflare 快速隧道無 SLA；關機即斷
 - 本輪內容切片尚未推送到 GitHub／Render；目前只在本機 production build／stress／瀏覽器 QA 驗證
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則

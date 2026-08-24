@@ -63,7 +63,7 @@ npm run build
 $env:HOST='127.0.0.1'; $env:PORT='4395'; $env:APP_VERSION='staging-local'; npm run start:prod
 ```
 
-伺服器提供 `/health` 與 `/ready`，會回報版本、啟動時間、uptime、房間數、玩家數與連線數；啟動、加入、拒絕與斷線會輸出 JSON log。對已部署的 URL 執行 4 人／雙房間 smoke：
+伺服器提供 `/health` 與 `/ready`，會回報版本、啟動時間、uptime、房間數、玩家數與連線數；`/metrics` 提供基本 Prometheus counters；啟動、加入、拒絕、錯誤與斷線會輸出 JSON log。正式服務方案、告警與 rollback 規則見 [docs/OPERATIONS.md](docs/OPERATIONS.md)。對已部署的 URL 執行 4 人／雙房間 smoke：
 
 ```powershell
 $env:STAGING_URL='https://你的-staging-url'; npm run test:staging

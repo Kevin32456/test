@@ -19,7 +19,14 @@ const SERVICE_NAME = "shuai-gou-server";
 const APP_VERSION =
   process.env.APP_VERSION ?? process.env.RENDER_GIT_COMMIT?.slice(0, 12) ?? "dev";
 const STARTED_AT = new Date().toISOString();
+const STARTED_AT_MS = Date.now();
 let activeConnections = 0;
+let totalConnections = 0;
+let totalJoinAccepted = 0;
+let totalJoinRejected = 0;
+let totalDisconnects = 0;
+let totalInvalidActions = 0;
+let isShuttingDown = false;
 
 type LogDetails = Record<string, string | number | boolean | null | undefined>;
 
@@ -99,7 +106,7 @@ function getRuntimeStatus() {
         : "multi";
   return {
     ok: true,
-    ready: true,
+    ready: !isShuttingDown,
     service: SERVICE_NAME,
     version: APP_VERSION,
     startedAt: STARTED_AT,
@@ -113,7 +120,8 @@ function getRuntimeStatus() {
 
 function sendRuntimeStatus(res: express.Response) {
   res.setHeader("Cache-Control", "no-store");
-  res.status(200).json(getRuntimeStatus());
+  const status = getRuntimeStatus();
+  res.status(status.ready ? 200 : 503).json(status);
 }
 
 app.get("/health", (_req, res) => {
@@ -122,6 +130,41 @@ app.get("/health", (_req, res) => {
 
 app.get("/ready", (_req, res) => {
   sendRuntimeStatus(res);
+});
+
+app.get("/metrics", (_req, res) => {
+  const metricLines = [
+    "# HELP shuai_gou_ready Whether the process is accepting new work.",
+    "# TYPE shuai_gou_ready gauge",
+    `shuai_gou_ready ${isShuttingDown ? 0 : 1}`,
+    "# HELP shuai_gou_uptime_seconds Process uptime in seconds.",
+    "# TYPE shuai_gou_uptime_seconds gauge",
+    `shuai_gou_uptime_seconds ${Math.floor((Date.now() - STARTED_AT_MS) / 1000)}`,
+    "# HELP shuai_gou_active_connections Current Socket.IO connections.",
+    "# TYPE shuai_gou_active_connections gauge",
+    `shuai_gou_active_connections ${activeConnections}`,
+    "# HELP shuai_gou_rooms Current non-empty rooms.",
+    "# TYPE shuai_gou_rooms gauge",
+    `shuai_gou_rooms ${rooms.size}`,
+    "# HELP shuai_gou_players Current joined players.",
+    "# TYPE shuai_gou_players gauge",
+    `shuai_gou_players ${getRuntimeStatus().players}`,
+    "# HELP shuai_gou_connections_total Total accepted Socket.IO connections.",
+    "# TYPE shuai_gou_connections_total counter",
+    `shuai_gou_connections_total ${totalConnections}`,
+    "# HELP shuai_gou_joins_total Total accepted and rejected joins.",
+    "# TYPE shuai_gou_joins_total counter",
+    `shuai_gou_joins_total{result="accepted"} ${totalJoinAccepted}`,
+    `shuai_gou_joins_total{result="rejected"} ${totalJoinRejected}`,
+    "# HELP shuai_gou_disconnects_total Total socket disconnects.",
+    "# TYPE shuai_gou_disconnects_total counter",
+    `shuai_gou_disconnects_total ${totalDisconnects}`,
+    "# HELP shuai_gou_invalid_actions_total Invalid action payloads rejected.",
+    "# TYPE shuai_gou_invalid_actions_total counter",
+    `shuai_gou_invalid_actions_total ${totalInvalidActions}`,
+  ];
+  res.setHeader("Cache-Control", "no-store");
+  res.type("text/plain; version=0.0.4").send(`${metricLines.join("\n")}\n`);
 });
 
 if (isProd) {
@@ -134,10 +177,12 @@ if (isProd) {
 
 io.on("connection", (socket) => {
   activeConnections += 1;
+  totalConnections += 1;
   logEvent("connection_opened", { connections: activeConnections });
 
   socket.on("join", (payload: unknown, ack?: (ok: boolean, reason?: string) => void) => {
     if (!isJoinPayload(payload)) {
+      totalJoinRejected += 1;
       logEvent("join_rejected", {
         reason: "invalid_payload",
         connections: activeConnections,
@@ -147,6 +192,7 @@ io.on("connection", (socket) => {
     }
 
     if (socket.data.roomCode) {
+      totalJoinRejected += 1;
       logEvent("join_rejected", {
         reason: "already_joined",
         roomCode: socket.data.roomCode,
@@ -158,6 +204,7 @@ io.on("connection", (socket) => {
 
     const roomCode = normalizeRoomCode(payload.roomCode);
     if (!roomCode) {
+      totalJoinRejected += 1;
       logEvent("join_rejected", {
         reason: "invalid_room_code",
         connections: activeConnections,
@@ -175,6 +222,7 @@ io.on("connection", (socket) => {
     );
     if (!ok) {
       removeRoomIfEmpty(roomCode, room);
+      totalJoinRejected += 1;
       logEvent("join_rejected", {
         reason: "room_full_or_character_taken",
         roomCode,
@@ -198,10 +246,15 @@ io.on("connection", (socket) => {
       players: room.getSnapshot().roomCount,
       rooms: rooms.size,
     });
+    totalJoinAccepted += 1;
   });
 
   socket.on("action", (action: unknown) => {
-    if (!isClientAction(action)) return;
+    if (!isClientAction(action)) {
+      totalInvalidActions += 1;
+      logEvent("action_rejected", { reason: "invalid_payload", connections: activeConnections });
+      return;
+    }
     const roomCode = socket.data.roomCode as string | undefined;
     if (!roomCode) return;
     rooms.get(roomCode)?.handleAction(socket.id, action);
@@ -209,6 +262,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", (reason: string) => {
     activeConnections = Math.max(0, activeConnections - 1);
+    totalDisconnects += 1;
     const roomCode = socket.data.roomCode as string | undefined;
     if (!roomCode) {
       logEvent("connection_closed", {
@@ -249,4 +303,30 @@ httpServer.listen(PORT, HOST, () => {
     defaultRoom: DEFAULT_ROOM_CODE,
     maxPlayers: GAME.MAX_PLAYERS,
   });
+});
+
+async function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  logEvent("server_stopping", { signal, rooms: rooms.size, connections: activeConnections });
+  io.close();
+  await new Promise<void>((resolve) => {
+    httpServer.close(() => resolve());
+    setTimeout(resolve, 10000).unref();
+  });
+  logEvent("server_stopped", { signal });
+}
+
+process.once("SIGTERM", () => void shutdown("SIGTERM"));
+process.once("SIGINT", () => void shutdown("SIGINT"));
+process.on("unhandledRejection", (reason) => {
+  logEvent("process_error", { kind: "unhandled_rejection", error: String(reason) });
+});
+process.on("uncaughtException", (error) => {
+  logEvent("process_error", {
+    kind: "uncaught_exception",
+    error: error instanceof Error ? error.stack ?? error.message : String(error),
+  });
+  process.exitCode = 1;
+  void shutdown("uncaughtException");
 });
