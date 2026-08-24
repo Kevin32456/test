@@ -1,0 +1,30 @@
+name: Service health gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_url:
+        description: "Public /health, /ready and /metrics base URL"
+        required: true
+        type: string
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check service endpoints
+        env:
+          SERVICE_URL: ${{ inputs.service_url }}
+        run: npm run ops:check
