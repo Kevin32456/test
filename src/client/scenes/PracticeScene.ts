@@ -10,6 +10,7 @@ import {
 } from "@shared/constants";
 import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
 import { characterCanvas, dogCanvas } from "../pixelArt";
+import { characterText, t } from "../i18n";
 
 export interface PracticeSceneData {
   characterId?: string;
@@ -64,6 +65,14 @@ export class PracticeScene extends Phaser.Scene {
 
   constructor() {
     super("PracticeScene");
+  }
+
+  preload() {
+    for (const c of CHARACTERS) {
+      if (!this.textures.exists(`char-${c.id}`)) {
+        this.load.image(`char-${c.id}`, c.asset);
+      }
+    }
   }
 
   create(data: PracticeSceneData = {}) {
@@ -139,9 +148,13 @@ export class PracticeScene extends Phaser.Scene {
   }
 
   private createActors() {
-    this.playerSprite = this.createCharacterSprite(this.characterId, this.player, "你");
+    this.playerSprite = this.createCharacterSprite(this.characterId, this.player, t("yourRole"));
     const partnerId = this.characterId === "coat" ? "hat" : "coat";
-    this.partnerSprite = this.createCharacterSprite(partnerId, this.partner, "練習搭檔");
+    this.partnerSprite = this.createCharacterSprite(
+      partnerId,
+      this.partner,
+      `${characterText(partnerId, 0)} · ${t("practiceLobby")}`,
+    );
 
     this.dogSprite = this.add.container(this.dog.x, this.dog.y).setDepth(30);
     const dogImage = this.add.image(0, 0, "dog-collie");
@@ -216,7 +229,7 @@ export class PracticeScene extends Phaser.Scene {
       .text(
         GAME.ARENA_WIDTH / 2,
         GAME.ARENA_HEIGHT / 2,
-        "練習完成！\n你已經會走位、Blink 與傳球。",
+        t("practiceComplete"),
         pixelTextStyle(PIXEL_FONT_SIZES.lg, {
           color: "#ffffff",
           backgroundColor: "rgba(16,18,24,0.94)",
@@ -229,7 +242,7 @@ export class PracticeScene extends Phaser.Scene {
       .setVisible(false);
 
     this.replayAction = this.add
-      .text(GAME.ARENA_WIDTH / 2 - 100, GAME.ARENA_HEIGHT / 2 + 92, "重新練習", this.actionTextStyle())
+      .text(GAME.ARENA_WIDTH / 2 - 100, GAME.ARENA_HEIGHT / 2 + 92, t("practiceReplay"), this.actionTextStyle())
       .setOrigin(0.5)
       .setDepth(201)
       .setInteractive({ useHandCursor: true })
@@ -237,7 +250,7 @@ export class PracticeScene extends Phaser.Scene {
       .on("pointerdown", () => this.restartPractice());
 
     this.exitAction = this.add
-      .text(GAME.ARENA_WIDTH / 2 + 100, GAME.ARENA_HEIGHT / 2 + 92, "回到大廳", this.actionTextStyle())
+      .text(GAME.ARENA_WIDTH / 2 + 100, GAME.ARENA_HEIGHT / 2 + 92, t("practiceLobby"), this.actionTextStyle())
       .setOrigin(0.5)
       .setDepth(201)
       .setInteractive({ useHandCursor: true })
@@ -280,7 +293,7 @@ export class PracticeScene extends Phaser.Scene {
     if (this.practiceStep === "move" && !this.moveCommandIssued) {
       this.moveCommandIssued = true;
       this.movementStart = { ...this.player };
-      this.statusText.setText("走位中…讓角色移動一小段，狗會跟著球靠近。\n練習房不會出局。\n");
+      this.statusText.setText(t("practiceMoveStarted"));
     }
   }
 
@@ -315,7 +328,9 @@ export class PracticeScene extends Phaser.Scene {
     if (this.practiceStep === "blink") {
       this.advanceTo("pass");
     } else {
-      this.statusText.setText(`Blink 成功！冷卻 ${Math.ceil(this.blinkCooldownMs / 1000)} 秒；練習中仍可繼續走位。`);
+      this.statusText.setText(t("practiceBlinkSuccess", {
+        seconds: Math.ceil(this.blinkCooldownMs / 1000),
+      }));
     }
   }
 
@@ -414,12 +429,12 @@ export class PracticeScene extends Phaser.Scene {
       Math.min(1, this.holdTimeSec / GAME.DOG_PRESSURE_BAR_SEC) * 100,
     );
     const cd = Math.ceil(this.blinkCooldownMs / 1000);
-    const holderText = this.ballHolder === "player" ? "你持球" : "搭檔持球";
+    const holderText = this.ballHolder === "player" ? t("practiceYouBall") : t("practicePartnerBall");
     this.hud.setText(
       [
-        "練習房｜不會出局",
-        `${holderText} · 狗壓 ${pressurePct}%`,
-        `Blink CD ${cd}s · Esc 回大廳`,
+        t("practiceHud"),
+        `${holderText} · ${t("hudHold", { hold: this.holdTimeSec.toFixed(1), pressure: pressurePct })}`,
+        `Blink CD ${cd}s · ${t("practiceEsc")}`,
       ].join("\n"),
     );
 
@@ -437,22 +452,22 @@ export class PracticeScene extends Phaser.Scene {
   private renderProgress() {
     const text =
       this.practiceStep === "move"
-        ? "練習 1 / 3\n右鍵點地，讓角色走一小段"
+        ? `${t("practiceMoveTitle")}\n${t("practiceMoveHint")}`
         : this.practiceStep === "blink"
-          ? "練習 2 / 3\n把滑鼠指向想去的方向，按 Space Blink"
+          ? `${t("practiceBlinkTitle")}\n${t("practiceBlinkHint")}`
           : this.practiceStep === "pass"
-            ? "練習 3 / 3\n持球時右鍵點擊上方的練習搭檔"
-            : "練習完成！\n你已經會走位、Blink 與傳球。";
+            ? `${t("practicePassTitle")}\n${t("practicePassHint")}`
+            : `${t("practiceCompleteTitle")}\n${t("practiceCompleteHint")}`;
     this.stepPanel.setText(text);
 
     if (this.practiceStep === "move") {
-      this.statusText.setText("右鍵點地移動；先走位，再做下一個動作。\n");
+      this.statusText.setText(t("practiceMoveProgress"));
     } else if (this.practiceStep === "blink") {
-      this.statusText.setText("Space 會向滑鼠方向瞬移 160px；持球與無球都能用。\n");
+      this.statusText.setText(t("practiceBlinkProgress"));
     } else if (this.practiceStep === "pass") {
-      this.statusText.setText("球很燙！右鍵點上方搭檔，把球傳出去。\n");
+      this.statusText.setText(t("practicePassTip"));
     } else {
-      this.statusText.setText("正式對局中，最後存活者獲勝。準備好就回大廳找朋友開局。\n");
+      this.statusText.setText(t("guideSurvive"));
     }
 
     const complete = this.practiceStep === "complete";
@@ -462,7 +477,7 @@ export class PracticeScene extends Phaser.Scene {
       complete ? GAME.ARENA_WIDTH / 2 + 100 : 112,
       complete ? GAME.ARENA_HEIGHT / 2 + 92 : GAME.ARENA_HEIGHT - 30,
     );
-    this.exitAction.setText(complete ? "回到大廳" : "Esc 回到大廳");
+    this.exitAction.setText(complete ? t("practiceLobby") : t("practiceEsc"));
   }
 
   private advanceTo(step: PracticeStep) {
@@ -488,7 +503,7 @@ export class PracticeScene extends Phaser.Scene {
     this.ball.targetY = this.partner.y - GAME.BALL_HOVER_OFFSET;
     this.partnerRing.setVisible(false);
     Sfx.pass();
-    this.statusText.setText("傳球中…等球落地，這才算完成接球。\n");
+    this.statusText.setText(t("practicePassFlight"));
   }
 
   private showMoveMarker(x: number, y: number) {

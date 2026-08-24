@@ -21,7 +21,15 @@ import {
 import "./fonts.css";
 import "./style.css";
 import { loadPixelFont } from "./loadPixelFont";
-import { characterDataURL } from "./pixelArt";
+import {
+  arenaText,
+  characterText,
+  getLocale,
+  setLocale,
+  subscribeLocale,
+  t,
+  type Locale,
+} from "./i18n";
 
 let phaserGame: Phaser.Game | null = null;
 let phaserLoadPromise: Promise<void> | null = null;
@@ -47,55 +55,70 @@ overlay.innerHTML = `
         <p class="lobby-subtitle">SHUAI GOU</p>
       </div>
     </header>
-    <p class="lobby-desc">選擇角色與房間後加入，每位角色僅限一人。角色是外觀與風格提示，不改變戰鬥數值。</p>
+    <p id="lobby-desc" class="lobby-desc"></p>
     <details id="guide-details" class="guide-panel" open>
       <summary>
-        <span>第一次玩？先看這裡</span>
-        <span class="guide-summary-note">一分鐘懂規則</span>
+        <span id="guide-title"></span>
+        <span id="guide-note" class="guide-summary-note"></span>
       </summary>
       <div class="guide-content">
         <ol class="guide-steps">
-          <li><strong>先走位：</strong>右鍵點地移動，狗只會擊殺持球者。</li>
-          <li><strong>球燙手：</strong>持球時右鍵點隊友傳球；球飛行落地後才會換手。</li>
-          <li><strong>留一手：</strong>Space 使用 Blink，持球或無球都能逃生。</li>
-          <li><strong>活到最後：</strong>被狗咬到會出局，最後存活者獲勝。</li>
+          <li id="guide-move"></li>
+          <li id="guide-pass"></li>
+          <li id="guide-blink"></li>
+          <li id="guide-survive"></li>
         </ol>
-        <p class="guide-tip">小訣竅：別等狗貼臉才傳球；先走位，再把球送到安全的隊友手上。</p>
+        <p id="guide-tip" class="guide-tip"></p>
       </div>
     </details>
     <div class="connection-settings">
       <div class="connection-field">
-        <label class="field-label" for="connection-mode">連線模式</label>
+        <label class="field-label" for="locale-input">語言 / Language</label>
+        <select id="locale-input">
+          <option value="zh-Hant">繁中</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="connection-field">
+        <label id="connection-mode-label" class="field-label" for="connection-mode"></label>
         <select id="connection-mode">
-          <option value="local">目前伺服器（本機／此頁面）</option>
-          <option value="remote">遠端伺服器</option>
+          <option id="local-server-option" value="local"></option>
+          <option id="remote-server-option" value="remote"></option>
         </select>
       </div>
       <div id="remote-url-field" class="connection-field" hidden>
-        <label class="field-label" for="server-url-input">遠端伺服器 URL</label>
+        <label id="remote-url-label" class="field-label" for="server-url-input"></label>
         <input id="server-url-input" type="url" placeholder="https://你的-tunnel.trycloudflare.com" />
       </div>
     </div>
-    <label class="field-label" for="arena-input">競技場</label>
+    <label id="arena-label" class="field-label" for="arena-input"></label>
     <select id="arena-input" aria-describedby="arena-description"></select>
     <p id="arena-description" class="arena-description"></p>
-    <label class="field-label" for="room-input">房間碼</label>
-    <input id="room-input" maxlength="12" autocapitalize="characters" spellcheck="false" value="MAIN" placeholder="4–12 碼英數字" />
-    <label class="field-label" for="name-input">暱稱</label>
-    <input id="name-input" maxlength="16" placeholder="輸入暱稱" value="玩家" />
-    <p class="section-label"><span>選擇角色</span></p>
+    <label id="room-label" class="field-label" for="room-input"></label>
+    <input id="room-input" maxlength="12" autocapitalize="characters" spellcheck="false" value="MAIN" />
+    <label id="name-label" class="field-label" for="name-input"></label>
+    <input id="name-input" maxlength="16" value="玩家" />
+    <p class="section-label"><span id="characters-label"></span></p>
     <div id="character-grid" class="character-grid"></div>
-    <ul id="player-list" class="player-list" aria-label="房間玩家"></ul>
+    <ul id="player-list" class="player-list"></ul>
     <p id="lobby-status" aria-live="polite">連線中…</p>
-    <button id="join-btn" disabled>加入房間</button>
-    <button id="start-btn" style="margin-top:8px;display:none" disabled>提前開始（至少 2 人）</button>
-    <button id="practice-btn" class="secondary-button" style="margin-top:8px">進入練習房（單人）</button>
+    <section id="result-panel" class="result-panel" aria-live="polite" hidden>
+      <p id="result-kicker" class="result-kicker"></p>
+      <h2 id="result-title"></h2>
+      <p id="result-outcome"></p>
+      <p id="result-reason"></p>
+      <p id="result-next" class="result-next"></p>
+    </section>
+    <button id="join-btn" disabled></button>
+    <button id="start-btn" style="margin-top:8px;display:none" disabled></button>
+    <button id="practice-btn" class="secondary-button" style="margin-top:8px"></button>
   </div>
 `;
 document.getElementById("app")!.appendChild(overlay);
 
 const nameInput = overlay.querySelector("#name-input") as HTMLInputElement;
 const connectionMode = overlay.querySelector("#connection-mode") as HTMLSelectElement;
+const localeInput = overlay.querySelector("#locale-input") as HTMLSelectElement;
 const remoteUrlField = overlay.querySelector("#remote-url-field") as HTMLDivElement;
 const serverUrlInput = overlay.querySelector("#server-url-input") as HTMLInputElement;
 const arenaSelect = overlay.querySelector("#arena-input") as HTMLSelectElement;
@@ -108,6 +131,12 @@ const joinBtn = overlay.querySelector("#join-btn") as HTMLButtonElement;
 const startBtn = overlay.querySelector("#start-btn") as HTMLButtonElement;
 const practiceBtn = overlay.querySelector("#practice-btn") as HTMLButtonElement;
 const guideDetails = overlay.querySelector("#guide-details") as HTMLDetailsElement;
+const resultPanel = overlay.querySelector("#result-panel") as HTMLElement;
+const resultKicker = overlay.querySelector("#result-kicker") as HTMLParagraphElement;
+const resultTitle = overlay.querySelector("#result-title") as HTMLHeadingElement;
+const resultOutcome = overlay.querySelector("#result-outcome") as HTMLParagraphElement;
+const resultReason = overlay.querySelector("#result-reason") as HTMLParagraphElement;
+const resultNext = overlay.querySelector("#result-next") as HTMLParagraphElement;
 
 function readStoredValue(key: string): string {
   try {
@@ -130,6 +159,10 @@ guideDetails.addEventListener("toggle", () => {
   storeValue("shuai-gou.guide-state", guideDetails.open ? "open" : "closed");
 });
 
+const savedLocale = readStoredValue("shuai-gou.locale");
+if (savedLocale === "en") setLocale("en");
+localeInput.value = getLocale();
+
 const savedConnectionMode = readStoredValue("shuai-gou.connection-mode");
 if (savedConnectionMode === "remote") connectionMode.value = "remote";
 serverUrlInput.value = readStoredValue("shuai-gou.server-url");
@@ -142,7 +175,7 @@ if (isValidArenaId(savedArenaId)) selectedArenaId = savedArenaId;
 function renderArenaChoice() {
   const arena = getArena(selectedArenaId);
   arenaSelect.value = arena.id;
-  arenaDescription.textContent = `${arena.description} ${arena.routeHint}`;
+  arenaDescription.textContent = `${arenaText(arena.id, 1)} ${arenaText(arena.id, 2)}`;
 }
 
 function buildArenaSelect() {
@@ -150,13 +183,56 @@ function buildArenaSelect() {
   for (const arena of ARENAS) {
     const option = document.createElement("option");
     option.value = arena.id;
-    option.textContent = arena.name;
+    option.textContent = arenaText(arena.id, 0);
     arenaSelect.append(option);
   }
   renderArenaChoice();
 }
 
+function applyLocale() {
+  const locale = getLocale();
+  document.documentElement.lang = locale;
+  document.title = locale === "en" ? "Shuai Gou" : "甩狗 Shuai Gou";
+  localeInput.value = locale;
+  overlay.querySelector("#lobby-desc")!.textContent = t("lobbyDesc");
+  overlay.querySelector("#guide-title")!.textContent = t("guideTitle");
+  overlay.querySelector("#guide-note")!.textContent = t("guideNote");
+  overlay.querySelector("#guide-move")!.textContent = t("guideMove");
+  overlay.querySelector("#guide-pass")!.textContent = t("guidePass");
+  overlay.querySelector("#guide-blink")!.textContent = t("guideBlink");
+  overlay.querySelector("#guide-survive")!.textContent = t("guideSurvive");
+  overlay.querySelector("#guide-tip")!.textContent = t("guideTip");
+  overlay.querySelector("#connection-mode-label")!.textContent = t("connectionMode");
+  overlay.querySelector("#local-server-option")!.textContent = t("localServer");
+  overlay.querySelector("#remote-server-option")!.textContent = t("remoteServer");
+  overlay.querySelector("#remote-url-label")!.textContent = t("remoteUrl");
+  overlay.querySelector("#arena-label")!.textContent = t("arenaLabel");
+  overlay.querySelector("#room-label")!.textContent = t("roomLabel");
+  overlay.querySelector("#name-label")!.textContent = t("nameLabel");
+  overlay.querySelector("#characters-label")!.textContent = t("charactersLabel");
+  roomInput.placeholder = t("roomPlaceholder");
+  nameInput.placeholder = t("namePlaceholder");
+  playerList.ariaLabel = t("playersAria");
+  joinBtn.textContent = t("join");
+  startBtn.textContent = t("start");
+  practiceBtn.textContent = t("practice");
+  buildArenaSelect();
+  buildCharacterGrid();
+  renderCharacterGrid(latestSnapshot);
+  if (!hasJoined && !isJoining) lobbyStatus.textContent = t("connectedSet");
+  if (latestSnapshot) renderLobby(latestSnapshot);
+}
+
 buildArenaSelect();
+applyLocale();
+
+localeInput.addEventListener("change", () => {
+  const next: Locale = localeInput.value === "en" ? "en" : "zh-Hant";
+  setLocale(next);
+  storeValue("shuai-gou.locale", next);
+});
+
+subscribeLocale(() => applyLocale());
 
 function updateConnectionFields() {
   const isRemote = connectionMode.value === "remote";
@@ -180,8 +256,8 @@ connectionMode.addEventListener("change", () => {
   updateConnectionFields();
   lobbyStatus.textContent =
     connectionMode.value === "remote"
-      ? "請輸入遠端伺服器 URL，再按加入房間。"
-      : "將使用目前頁面的伺服器。";
+      ? t("remotePrompt")
+      : t("localPrompt");
 });
 
 roomInput.addEventListener("input", () => {
@@ -206,12 +282,12 @@ arenaSelect.addEventListener("change", () => {
 function buildCharacterGrid() {
   characterGrid.innerHTML = CHARACTERS.map(
     (c) => `
-    <button type="button" class="char-card" data-id="${c.id}" aria-label="${c.name}">
+    <button type="button" class="char-card" data-id="${c.id}" aria-label="${characterText(c.id, 0)}">
       <span class="char-check">✓</span>
-      <img src="${characterDataURL(c.id)}" alt="${c.name}" />
-      <span class="char-name">${c.name}</span>
-      <span class="char-tagline">${c.tagline}</span>
-      <span class="char-description">${c.description}</span>
+      <img src="${c.asset}" alt="${characterText(c.id, 0)}" />
+      <span class="char-name">${characterText(c.id, 0)}</span>
+      <span class="char-tagline">${characterText(c.id, 1)}</span>
+      <span class="char-description">${characterText(c.id, 2)}</span>
       <span class="char-status"></span>
     </button>`,
   ).join("");
@@ -264,11 +340,11 @@ function renderCharacterGrid(snapshot: GameSnapshot | null) {
 
     const status = btn.querySelector(".char-status")!;
     if (takenByOther) {
-      status.textContent = `${owner} 已選`;
+      status.textContent = getLocale() === "en" ? `${owner} selected` : `${owner} 已選`;
     } else if (isMine) {
-      status.textContent = "你的角色";
+      status.textContent = t("yourRole");
     } else {
-      status.textContent = "可選";
+      status.textContent = t("available");
     }
   });
 }
@@ -281,6 +357,27 @@ function hideOverlay() {
   overlay.style.display = "none";
 }
 
+function renderRoundResult(snapshot: GameSnapshot) {
+  if (snapshot.phase !== "ended") {
+    resultPanel.hidden = true;
+    return;
+  }
+
+  const me = snapshot.players.find((p) => p.id === playerId);
+  resultPanel.hidden = false;
+  resultKicker.textContent = t("resultKicker");
+  resultTitle.textContent = snapshot.winnerName
+    ? t("resultWinner", { winner: snapshot.winnerName })
+    : t("resultDraw");
+  resultOutcome.textContent = me
+    ? me.alive
+      ? t("resultSurvived")
+      : t("resultEliminated")
+    : "";
+  resultReason.textContent = me?.alive ? "" : me ? t("resultReason") : "";
+  resultNext.textContent = t("resultNext");
+}
+
 function renderLobby(snapshot: GameSnapshot) {
   if (isValidArenaId(snapshot.arenaId)) {
     selectedArenaId = snapshot.arenaId;
@@ -288,6 +385,7 @@ function renderLobby(snapshot: GameSnapshot) {
   }
   pickFirstAvailable(snapshot);
   renderCharacterGrid(snapshot);
+  renderRoundResult(snapshot);
 
   playerList.replaceChildren();
   for (const p of snapshot.players) {
@@ -295,35 +393,50 @@ function renderLobby(snapshot: GameSnapshot) {
     const item = document.createElement("li");
     const icon = document.createElement("img");
     icon.className = "player-char-icon";
-    icon.src = characterDataURL(p.characterId, 3);
+    icon.src = char?.asset ?? "/assets/characters/char-hat.svg";
     icon.alt = "";
     item.append(
       icon,
       document.createTextNode(
-        ` ${p.name} · ${char?.name ?? ""}${p.id === playerId ? "（你）" : ""}`,
+        ` ${p.name} · ${char ? characterText(char.id, 0) : ""}${p.id === playerId ? (getLocale() === "en" ? " (you)" : "（你）") : ""}`,
       ),
     );
     playerList.append(item);
   }
 
   if (snapshot.phase === "lobby") {
-    lobbyStatus.textContent = `房間 ${activeRoomCode} · ${getArena(selectedArenaId).name} · 等待玩家 ${snapshot.roomCount}/${GAME.MAX_PLAYERS} · 右鍵移動／傳球`;
+    lobbyStatus.textContent = t("roomStatus", {
+      room: activeRoomCode,
+      arena: arenaText(selectedArenaId, 0),
+      count: snapshot.roomCount,
+      max: GAME.MAX_PLAYERS,
+    });
     startBtn.style.display = hasJoined ? "block" : "none";
     startBtn.disabled = snapshot.roomCount < GAME.MIN_PLAYERS_TO_START;
-    joinBtn.textContent = hasJoined ? "已加入房間" : "加入房間";
+    startBtn.textContent = t("start");
+    joinBtn.textContent = hasJoined ? t("joined") : t("join");
     joinBtn.disabled = hasJoined || !selectedCharacterId;
     practiceBtn.style.display = hasJoined ? "none" : "block";
+    practiceBtn.textContent = t("practice");
     practiceBtn.disabled = hasJoined || isJoining;
   } else if (snapshot.phase === "countdown") {
-    lobbyStatus.textContent = `${getArena(selectedArenaId).name} · 即將開始… ${Math.ceil(snapshot.countdownSec ?? 0)}`;
+    lobbyStatus.textContent = t("countdownStatus", {
+      arena: arenaText(selectedArenaId, 0),
+      countdown: Math.ceil(snapshot.countdownSec ?? 0),
+    });
     startBtn.style.display = "none";
     practiceBtn.style.display = "none";
+    joinBtn.textContent = t("joined");
   } else if (snapshot.phase === "ended") {
     lobbyStatus.textContent = snapshot.winnerName
-      ? `本局結果：${snapshot.winnerName} 獲勝！${Math.ceil(GAME.LOBBY_RESET_MS / 1000)} 秒後開始下一局…`
-      : `本局結束；${Math.ceil(GAME.LOBBY_RESET_MS / 1000)} 秒後開始下一局…`;
-    startBtn.style.display = "none";
+      ? t("endedStatus", { winner: snapshot.winnerName })
+      : t("endedDrawStatus");
+    startBtn.style.display = hasJoined ? "block" : "none";
+    startBtn.disabled = true;
+    startBtn.textContent = t("replayWaiting");
     practiceBtn.style.display = "none";
+    joinBtn.textContent = t("joined");
+    joinBtn.disabled = true;
   }
   updateConnectionFields();
 }
@@ -391,7 +504,7 @@ function handlePracticeExit() {
   phaserGame?.scene.stop("PracticeScene");
   showOverlay();
   practiceBtn.disabled = hasJoined || isJoining;
-  lobbyStatus.textContent = "已離開練習房；準備好後可以加入多人房間。";
+  lobbyStatus.textContent = t("practiceExit");
   renderCharacterGrid(latestSnapshot);
 }
 
@@ -418,14 +531,14 @@ bindNetworkHandlers({
   onConnect: () => {
     if (isInPractice) return;
     lobbyStatus.textContent = isJoining
-      ? `已連線，正在加入房間 ${pendingRoomCode}…`
-      : "已連線，設定房間後加入。";
+      ? t("connectedJoining", { room: pendingRoomCode })
+      : t("connectedSet");
     joinBtn.disabled = hasJoined || !selectedCharacterId;
     renderCharacterGrid(latestSnapshot);
   },
   onDisconnect: () => {
     if (isInPractice) return;
-    lobbyStatus.textContent = "連線中斷，請重新整理頁面。";
+    lobbyStatus.textContent = t("disconnected");
     hasJoined = false;
     isJoining = false;
     joinBtn.disabled = false;
@@ -463,18 +576,18 @@ joinBtn.addEventListener("click", () => {
 
   const roomCode = normalizeRoomCode(roomInput.value);
   if (!roomCode) {
-    lobbyStatus.textContent = "房間碼需為 4–12 碼英數字。";
+    lobbyStatus.textContent = t("invalidRoom");
     return;
   }
 
   const serverUrl = connectionMode.value === "remote" ? serverUrlInput.value : "";
   if (connectionMode.value === "remote" && !serverUrl.trim()) {
-    lobbyStatus.textContent = "請輸入遠端伺服器 URL。";
+    lobbyStatus.textContent = t("remoteRequired");
     return;
   }
   const configured = configureServerUrl(serverUrl);
   if (!configured.ok) {
-    lobbyStatus.textContent = "遠端伺服器 URL 無效，請確認以 http:// 或 https:// 開頭。";
+    lobbyStatus.textContent = t("remoteInvalid");
     return;
   }
 
@@ -483,7 +596,7 @@ joinBtn.addEventListener("click", () => {
   isJoining = true;
   joinBtn.disabled = true;
   updateConnectionFields();
-  lobbyStatus.textContent = `正在加入房間 ${roomCode}…`;
+  lobbyStatus.textContent = t("connectedJoining", { room: roomCode });
   joinRoom(
     nameInput.value.trim() || "玩家",
     selectedCharacterId,
@@ -495,12 +608,12 @@ joinBtn.addEventListener("click", () => {
         updateConnectionFields();
         lobbyStatus.textContent =
           reason === "room_full_or_character_taken"
-            ? "房間已滿或角色已被選走，請換一個。"
+            ? t("roomFull")
             : reason === "invalid_room_code"
-              ? "房間碼無效，請使用 4–12 碼英數字。"
+              ? t("invalidRoom")
               : reason === "already_joined"
-                ? "你已經加入房間。"
-                : "無法加入，請確認伺服器與房間碼後再試。";
+                ? t("alreadyJoined")
+                : t("joinFailed");
         joinBtn.disabled = false;
         pickFirstAvailable(latestSnapshot);
         renderCharacterGrid(latestSnapshot);
@@ -521,7 +634,7 @@ practiceBtn.addEventListener("click", () => {
     if (!phaserGame) {
       isInPractice = false;
       showOverlay();
-      lobbyStatus.textContent = "練習房載入失敗，請重新整理頁面。";
+      lobbyStatus.textContent = t("practiceLoadFail");
       return;
     }
     phaserGame.scene.stop("GameScene");

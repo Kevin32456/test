@@ -6,7 +6,6 @@ import { GAME, arenaCenter } from "@shared/constants";
 import {
   DEFAULT_ARENA_ID,
   getArena,
-  getArenaStageDefinition,
   isValidArenaId,
   type ArenaId,
   type ArenaStage,
@@ -20,6 +19,7 @@ import {
   subscribeState,
 } from "../network";
 import { characterCanvas, dogCanvas } from "../pixelArt";
+import { arenaText, stageText, t } from "../i18n";
 
 interface DisplayPoint {
   x: number;
@@ -72,8 +72,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    // 角色 PNG 尚未隨專案提供；create() 會使用程式繪製的 canvas fallback。
-    // 不預載不存在的檔案，避免瀏覽器 console 產生誤導性的 asset errors。
+    for (const c of CHARACTERS) {
+      if (!this.textures.exists(`char-${c.id}`)) {
+        this.load.image(`char-${c.id}`, c.asset);
+      }
+    }
   }
 
   create() {
@@ -124,7 +127,7 @@ export class GameScene extends Phaser.Scene {
       .text(
         GAME.ARENA_WIDTH / 2,
         GAME.ARENA_HEIGHT / 2 + 72,
-        "目標：活到最後\n右鍵走位／持球點隊友傳球\nSpace：Blink",
+        t("countdownObjective"),
         pixelTextStyle(PIXEL_FONT_SIZES.xs, {
           color: "#d5d7e5",
           backgroundColor: "rgba(16,18,24,0.82)",
@@ -142,7 +145,7 @@ export class GameScene extends Phaser.Scene {
       .setDepth(35)
       .setVisible(false);
     this.passHoverHint = this.add
-      .text(0, 0, "可傳球", pixelTextStyle(PIXEL_FONT_SIZES.xs, {
+      .text(0, 0, t("passHint"), pixelTextStyle(PIXEL_FONT_SIZES.xs, {
         color: "#b2ebf2",
         backgroundColor: "rgba(10,16,20,0.78)",
         padding: { x: 6, y: 3 },
@@ -535,7 +538,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showArenaStageBanner(stage: ArenaStage) {
-    const definition = getArenaStageDefinition(stage);
     if (!this.arenaStageBanner) {
       this.arenaStageBanner = this.add
         .text(GAME.ARENA_WIDTH / 2, 132, "", pixelTextStyle(PIXEL_FONT_SIZES.xs, {
@@ -550,7 +552,11 @@ export class GameScene extends Phaser.Scene {
 
     this.tweens.killTweensOf(this.arenaStageBanner);
     this.arenaStageBanner
-      .setText(`${getArena(this.arenaId).name} · ${definition.title}\n${definition.prompt}`)
+      .setText(t("stageArena", {
+        arena: arenaText(this.arenaId, 0),
+        title: stageText(stage, 0),
+        prompt: stageText(stage, 1),
+      }))
       .setAlpha(1)
       .setVisible(true);
     this.tweens.add({
@@ -594,7 +600,7 @@ export class GameScene extends Phaser.Scene {
     if (snapshot.phase === "countdown") {
       const sec = Math.ceil(snapshot.countdownSec ?? 0);
       this.countdownHint.setText(
-        `場地：${getArena(this.arenaId).name}\n${getArenaStageDefinition(this.arenaStage).title}\n目標：活到最後\n右鍵走位／持球點隊友傳球\nSpace：Blink`,
+        `${arenaText(this.arenaId, 0)} · ${stageText(this.arenaStage, 0)}\n${t("countdownObjective")}`,
       );
       if (!this.countdownBanner) {
         this.countdownBanner = this.add
@@ -606,7 +612,7 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5)
           .setDepth(300);
       }
-      this.countdownBanner.setText(sec > 0 ? String(sec) : "開始！");
+      this.countdownBanner.setText(sec > 0 ? String(sec) : t("countdownStart"));
       this.countdownBanner.setVisible(true);
       this.countdownHint.setVisible(true);
     } else if (this.countdownBanner) {
@@ -647,9 +653,10 @@ export class GameScene extends Phaser.Scene {
       const sec = Math.max(1, Math.ceil(snapshot.deathPauseMs / 1000));
       this.deathPauseOverlay.setVisible(true);
       this.deathPauseBanner
-        .setText(
-          `${snapshot.eliminatedPlayerName ?? "玩家"} 出局！\n${sec} 秒後重新傳球`,
-        )
+        .setText(t("deathPause", {
+          player: snapshot.eliminatedPlayerName ?? t("playerFallback"),
+          seconds: sec,
+        }))
         .setVisible(true);
     } else {
       this.deathPauseOverlay?.setVisible(false);
@@ -743,23 +750,23 @@ export class GameScene extends Phaser.Scene {
 
     let ballHint = "";
     if (snapshot.deathPauseMs > 0) {
-      ballHint = "死亡停頓 — 全場暫停";
+      ballHint = t("hudDeathPause");
     } else if (snapshot.ball.inFlight) {
-      ballHint = "球飛行中 — 狗仍追球";
+      ballHint = t("hudBallFlight");
     } else if (me?.hasBall) {
-      ballHint = `你持球：右鍵點人傳球 · Blink CD ${cd}s`;
+      ballHint = t("hudYouHaveBall", { cd });
     } else if (me?.alive) {
-      ballHint = `Blink <Space> · CD ${cd}s`;
+      ballHint = t("hudBlink", { cd });
     } else {
-      ballHint = "觀戰中";
+      ballHint = t("hudSpectating");
     }
 
-    const controlHint = "右鍵移動／傳球 · Space Blink";
+    const controlHint = t("hudControls");
 
     this.hud.setText(
       [
-        `存活 ${aliveCount}/${snapshot.players.length}`,
-        `持球 ${snapshot.holdTimeSec.toFixed(1)}s · 狗壓 ${pressurePct}%`,
+        t("hudAlive", { alive: aliveCount, total: snapshot.players.length }),
+        t("hudHold", { hold: snapshot.holdTimeSec.toFixed(1), pressure: pressurePct }),
         ballHint,
         controlHint,
       ].join("\n"),
@@ -776,8 +783,20 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5)
           .setDepth(200);
       }
+      const endedMe = snapshot.players.find((p) => p.id === getPlayerId());
       this.endedBanner.setText(
-        snapshot.winnerName ? `${snapshot.winnerName} 獲勝！` : "平局",
+        [
+          snapshot.winnerName
+            ? t("resultWinner", { winner: snapshot.winnerName })
+            : t("resultDraw"),
+          endedMe
+            ? endedMe.alive
+              ? t("resultSurvived")
+              : t("resultEliminated")
+            : "",
+          endedMe?.alive ? "" : endedMe ? t("resultReason") : "",
+          t("resultNext"),
+        ].filter(Boolean).join("\n"),
       );
     } else if (this.endedBanner) {
       this.endedBanner.destroy();

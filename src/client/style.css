@@ -442,7 +442,7 @@ body {
 
 .char-description {
   display: -webkit-box;
-  min-height: 2.9em;
+  min-height: 4.35em;
   margin-top: 3px;
   overflow: hidden;
   color: var(--muted);
@@ -450,7 +450,7 @@ body {
   line-height: 1.45;
   text-align: center;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
 }
 
 .char-status {
@@ -459,6 +459,28 @@ body {
   color: var(--muted);
   min-height: 1.2em;
   text-align: center;
+}
+
+/* generic buttons are vermilion; character cards keep the quieter selection palette */
+.lobby-card button.char-card {
+  padding: 8px 6px 6px;
+  border: 2px solid var(--line);
+  background: var(--indigo);
+  color: var(--text);
+}
+
+.lobby-card button.char-card:hover:not(:disabled):not(.selected) {
+  border-color: var(--gold);
+  background: #252b42;
+}
+
+.lobby-card button.char-card.selected {
+  border-color: var(--vermillion);
+  background: #2a2331;
+}
+
+.lobby-card button.char-card.taken {
+  background: #252733;
 }
 
 /* ===== 玩家列表 ===== */
@@ -498,6 +520,45 @@ body {
 
 #lobby-status {
   margin: 0 0 12px;
+  color: var(--sakura);
+}
+
+.result-panel {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--gold);
+  background: rgba(217, 164, 65, 0.09);
+  color: var(--text);
+}
+
+.result-panel[hidden] {
+  display: none;
+}
+
+.result-kicker {
+  margin: 0 0 4px;
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.result-panel h2 {
+  margin: 0 0 7px;
+  color: #fff0c4;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.result-panel p {
+  margin: 4px 0;
+  line-height: 1.55;
+}
+
+.result-next {
+  margin-top: 9px !important;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
   color: var(--sakura);
 }
 

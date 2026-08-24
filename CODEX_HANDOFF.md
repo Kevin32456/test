@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場與 teach／test／twist／mastery 最小 slice 已通過本機 QA；目前進入公開 staging 更新前的內容／網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG 與繁中／英文介面切換已通過本機 QA；目前等待把最新本機 slice 部署到公開 Render staging，並完成真人內容／跨裝置網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
@@ -32,10 +32,10 @@
 - join 邊界拒絕未知角色 ID；玩家名單改用 text node 渲染，避免遠端暱稱注入 HTML
 - staging 改用 `dist-server` 編譯結果啟動；新增 `/ready`、版本／uptime／房間／連線狀態
 - 新增結構化 JSON server log（啟動、連線、加入拒絕／成功、斷線 reason）與 `npm run test:staging`
-- 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開端已完成新版 redeploy，`/ready` 回傳 `ready: true`、`version: staging`
+- 已取得 Render staging URL：`https://test-vccb.onrender.com`；目前 `/ready` 仍是舊啟動時間，最新本機 slice 尚未重新部署，需登入 Render 後手動 Deploy latest commit
 - 新增 `tests/staging.stress.ts` 與 `npm run test:staging:stress`：8 人滿房、第 9 人拒絕、應用層延遲／抖動／丟失 action、斷線清理與 8 人重連
 - 瀏覽器 QA 修正遠端模式空 URL 誤連目前頁面的問題；公開版已驗證空 URL 阻止加入、有效 Render URL 可加入，console 無 error/warn
-- `GameScene` 停止預載不存在的角色 PNG，保留 canvas fallback；公開 8 分頁對局不再產生 asset console errors
+- `GameScene`／`PracticeScene` 會載入專案內 8 個正式 SVG 角色圖示；保留 canvas fallback，避免素材載入失敗阻斷 playtest
 - 大廳新增可收合／可重看的玩法指南，倒數畫面補上目標與主要操作提示，結算狀態明確顯示勝者與下一局
 - 8 名角色新增選角風格與描述，明確標示目前不改變戰鬥數值
 - 新增 `docs/CONTENT-ROADMAP.md`，將練習房、第二競技場、回合變化與上架內容 gate 排序
@@ -44,6 +44,9 @@
 - 第二競技場已接上房間快照、join payload 與 `selectArena` action；房間內所有玩家同步看到月影庭，核心圓形邊界與規則不變
 - 第二競技場加入 teach／test／twist／mastery 四階段：伺服器依回合時間發出 `arenaStage`，月影庭切換單一路線、四月燈、斜線與全場動線；加入階段提示與短音效
 - 新增 `docs/PLAYTEST-OBSERVATION.md`，規範不熟悉規則玩家的練習房、第一局與月影庭觀察流程
+- 結算區塊加入勝者、本人存活／出局、出局原因、下一步提示與下一局入口；GameScene 結算 banner 同步顯示相同資訊
+- 新增 `src/client/i18n.ts` 與大廳語言切換，繁中／英文覆蓋大廳、角色、競技場、練習房、HUD、階段提示與結算文字
+- 新增 `scripts/generate-character-assets.ts` 與 8 個 `public/assets/characters/char-*.svg` 正式像素圖示；`npm run test:content` 驗證素材、階段資料與雙語字串
 
 ## 核心規則
 
@@ -70,6 +73,8 @@
 - `src/client/network.ts`、`src/client/main.ts`、`src/client/style.css` — 遠端 URL／房間碼設定與大廳 UI
 - `src/client/scenes/GameScene.ts` — 競技場繪製、輸入、插值、hover、離場清圖
 - `src/client/audio/Sfx.ts` — 既有操作音效與四階段提示音
+- `src/client/i18n.ts` — 繁中／英文介面與內容文字
+- `scripts/generate-character-assets.ts`、`public/assets/characters/` — 正式角色圖示與可重建素材流程
 - `src/client/scenes/PracticeScene.ts` — 單人練習房的教學步驟、練習搭檔與非致命追球狗
 - `src/shared/characters.ts` — 角色選角風格與描述資料
 - `tests/server.test.ts`、`tests/staging.smoke.ts`、`tests/staging.stress.ts`、`.github/workflows/ci.yml` — focused tests、staging smoke、8 人 stress、CI
@@ -110,18 +115,21 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - multi-room Socket.IO smoke：通過；`ALPHA`／`BETA` 各自只看到同房 2 人，health 回報 2 房／4 人，斷線後房間清理
 - `npm run start:prod`：通過；compiled server `/ready`、首頁靜態檔 200
 - `npm run test:staging`：通過；4 人雙房間、斷線後 4 個角色可再次加入，最後 `rooms:0`／`players:0`／`connections:0`
-- 公開 Render smoke：通過；`/ready` 與 `/health` 為新版 JSON，4 客戶／雙房間隔離、斷線清理與 4 角色重連成功，最後 `rooms:0`／`players:0`／`connections:0`
+- 公開 Render smoke（上一版 baseline）：通過；`/ready` 與 `/health` 為 JSON，4 客戶／雙房間隔離、斷線清理與 4 角色重連成功；不代表本輪最新內容已部署
 - `npm run test:staging:stress` 本機 production：通過；8 人同房、192 個模擬 action、48 個丟失、8 人重連與清理成功
-- `npm run test:staging:stress` 公開 Render：通過；8 人同房、153/192 action 送出、39/192 action 丟失，所有客戶持續收到狀態，最後 `rooms:0`／`players:0`／`connections:0`
+- `npm run test:staging:stress` 公開 Render（上一版 baseline）：通過；8 人同房、153/192 action 送出、39/192 action 丟失，所有客戶持續收到狀態；需新版部署後重跑
 - `npm run typecheck`：通過；第二競技場的 shared/server/client arena contract 無型別錯誤
 - `npm test`：通過；arena join/action 驗證、房間 arena snapshot 與既有倒數離場測試通過
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯
+- `npm run test:content`：通過；8 個角色 SVG、2 個競技場、teach／test／twist／mastery 順序與繁中／英文字串完整
 - `npm run test:staging:stress` 本機 production（新版 arena stage）：通過；8 人同房、第一位選月影庭後 8/8 收到 `moon-garden`、第 9 人拒絕、192 個延遲／丟失 action、stage 已進入 `test`、斷線與重連清理成功
 - 本機第二競技場瀏覽器 smoke：通過；第一位玩家選月影庭後，第二位以朱印圓場加入仍被房間快照校正為月影庭；大廳切換可同步到兩頁，兩頁 canvas 均出現月庭四路標／菱形動線，console 無 error/warn
 - 本機階段畫面 smoke：通過；canvas 顯示月影庭 teach 階段的單一路線、亮／暗月燈與階段文字提示，兩頁 console 無 error/warn
+- 本機英文內容 smoke：通過；語言切換後角色 SVG 8/8 完整載入，練習房英文畫面完成 `1/3 → 2/3 → 3/3`，Phaser canvas 無 asset error
+- 本機結算 smoke：通過；兩名玩家實際對局後顯示勝者、本人出局、出局原因、下一步與下一局準備入口
 - 小螢幕入口 smoke：通過；390×844 下競技場選單、加入房間與練習房按鈕可見可操作，viewport 已恢復預設
-- 公開瀏覽器 QA：通過；新版 bundle `index-D8uulqrq.js`，空白遠端 URL 顯示要求輸入並不建立房間；填入 `https://test-vccb.onrender.com` 可加入 `BRWQA22E`，離開後 `/ready` 回到 0 房／0 人／0 連線
-- 公開 8 分頁瀏覽器 QA：通過；`BRWUI824` 8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn，離開後 `/ready` 回到 0 房／0 人／0 連線
+- 公開瀏覽器 QA（上一版 baseline）：通過；空白遠端 URL 阻止加入、有效 Render URL 可加入，離開後 `/ready` 回到 0 房／0 人／0 連線；需新版部署後重跑
+- 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；需新版部署後重跑
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
@@ -134,20 +142,20 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 8 人滿房、Radmin 滿載上傳尚未完整實測
 - 接到球到可再傳仍受飛行時間 + 單程延遲限制（非接球硬直）
 - 高速 agility 0.9 的甩尾／咬人平衡需再 playtest
-- 角色 PNG 仍不存在；目前使用程式繪製的 deterministic pixel art，畫面可用但尚未完成可交付的正式素材包
+- 正式角色 SVG 已加入並在瀏覽器載入；仍需以最終 Steam 商店截圖確認整體美術方向，並決定是否補更高解析度宣傳素材
 - Phaser deferred chunk 仍大，需以 profiler／目標裝置決定是否進一步拆分
 - desktop prototype 使用 Electron 預設圖示；portable artifact 的 Authenticode 狀態為 `NotSigned`，尚未配置正式 icon／Windows code signing
 - desktop 預設啟動本機 server；遠端 URL／房間碼已可測試，但尚未有常駐遠端部署、Steam App ID、Steam Lobby
-- Render staging URL 已取得並完成新版部署；8 人單房與應用層 action jitter/loss 已驗證，但尚未做真實 transport-level 丟包、跨裝置延遲或長時間壓測
+- Render staging URL 已取得，但目前公開 `/ready` 尚未反映最新本機 slice；8 人單房與應用層 action jitter/loss 已在本機驗證，尚未做真實 transport-level 丟包、跨裝置延遲或長時間壓測
 - `npm run test:staging:stress` 的延遲／抖動／丟失是測試客戶端 action 模擬，不等同於作業系統或路由器層的封包損失
 - 8 分頁瀏覽器 QA 仍是同一台機器／網路，尚未取代 8 台不同裝置／網路的真人對局證據
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - Cloudflare 快速隧道無 SLA；關機即斷
-- 本次內容切片尚未推送到 GitHub／Render；目前只在本機 production build／stress 驗證
+- 本輪內容切片尚未推送到 GitHub／Render；目前只在本機 production build／stress／瀏覽器 QA 驗證
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則
-- 角色描述目前是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞、特殊回合或正式素材包
+- 角色描述仍是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞或特殊回合
 - 第二競技場已完成同機 8 人與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與長時間重玩驗證
 
 ## Next Safest Task
 
-下一個最安全任務是把目前切片提交並部署到 Render staging，重跑公開 8 人／arena sync／斷線清理 smoke；同時安排非開發者依 `docs/PLAYTEST-OBSERVATION.md` 實測。正式角色素材、跨裝置真人測試與 Steam App ID／SteamPipe／簽章仍不混入本階段。詳見 `docs/CONTENT-ROADMAP.md` 與 `STEAM_RELEASE_CHECKLIST.md`。
+下一個最安全任務是提交本輪內容並部署到 Render staging，重跑公開 8 人／arena sync／斷線清理 smoke；同時安排非開發者依 `docs/PLAYTEST-OBSERVATION.md` 實測。跨裝置真人測試、長時間重玩、正式音樂／混音、Steam App ID／SteamPipe／簽章仍未完成。詳見 `docs/CONTENT-ROADMAP.md` 與 `STEAM_RELEASE_CHECKLIST.md`。

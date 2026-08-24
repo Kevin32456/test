@@ -13,7 +13,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "hat",
     name: "紳士",
-    asset: "/assets/characters/char-hat.png",
+    asset: "/assets/characters/char-hat.svg",
     color: "#c9a86c",
     tagline: "冷靜周旋",
     description: "讀狗的路線，讓每次轉身都有餘裕。",
@@ -21,7 +21,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "gauntlet",
     name: "拳手",
-    asset: "/assets/characters/char-gauntlet.png",
+    asset: "/assets/characters/char-gauntlet.svg",
     color: "#e57373",
     tagline: "正面挑釁",
     description: "在危險邊緣帶狗繞圈，再把球甩出去。",
@@ -29,7 +29,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "spike",
     name: "少年",
-    asset: "/assets/characters/char-spike.png",
+    asset: "/assets/characters/char-spike.svg",
     color: "#4fc3f7",
     tagline: "高速誘餌",
     description: "用短線走位拉開空間，替隊友製造接球角度。",
@@ -37,7 +37,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "coat",
     name: "旅人",
-    asset: "/assets/characters/char-coat.png",
+    asset: "/assets/characters/char-coat.svg",
     color: "#81c784",
     tagline: "穩健走位",
     description: "先活下來，再把球傳到下一個安全位置。",
@@ -45,7 +45,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "ninja",
     name: "忍者",
-    asset: "/assets/characters/char-ninja.png",
+    asset: "/assets/characters/char-ninja.svg",
     color: "#9575cd",
     tagline: "瞬間脫身",
     description: "把 Blink 留給最後一刻，從狗的路線中消失。",
@@ -53,7 +53,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "miko",
     name: "巫女",
-    asset: "/assets/characters/char-miko.png",
+    asset: "/assets/characters/char-miko.svg",
     color: "#ef5350",
     tagline: "安全傳球",
     description: "先看隊友位置，再把燙手的球送到遠處。",
@@ -61,7 +61,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "mechanic",
     name: "機工師",
-    asset: "/assets/characters/char-mechanic.png",
+    asset: "/assets/characters/char-mechanic.svg",
     color: "#26a69a",
     tagline: "節奏控球",
     description: "控制持球時間，在狗加速前做出決定。",
@@ -69,7 +69,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: "captain",
     name: "船長",
-    asset: "/assets/characters/char-captain.png",
+    asset: "/assets/characters/char-captain.svg",
     color: "#5c6bc0",
     tagline: "帶隊決策",
     description: "讓整隊保持可接球的距離，掌握傳球節奏。",

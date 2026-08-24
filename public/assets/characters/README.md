@@ -1,16 +1,11 @@
 # 角色 Sprite
 
-如要用外部 PNG 取代程式繪製的 8 名像素角色，請使用以下檔名：
+專案內的 8 名角色圖示是可交付的 12×16 像素 SVG 素材，供大廳、玩家列表、Phaser 場景、桌面包與 Steam 截圖共用。
 
-| 檔名 | 角色 |
-|------|------|
-| `char-hat.png` | 紳士 |
-| `char-gauntlet.png` | 拳手 |
-| `char-spike.png` | 少年 |
-| `char-coat.png` | 旅人 |
-| `char-ninja.png` | 忍者 |
-| `char-miko.png` | 巫女 |
-| `char-mechanic.png` | 機工師 |
-| `char-captain.png` | 船長 |
+如要修改色盤或像素網格，執行：
 
-建議透明背景 PNG。放好後重新整理頁面即可，無需改程式。
+```bash
+npm run assets:characters
+```
+
+Phaser 仍保留程式繪製的 deterministic fallback，只有在素材損壞或載入失敗時才會使用；正常 production path 會載入同目錄的 `char-*.svg`。
