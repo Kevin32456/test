@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client";
+import type { ArenaId } from "@shared/arenas";
 import type { ClientAction, GameSnapshot, JoinedPayload } from "@shared/types";
 
 type NetworkHandlers = {
@@ -114,7 +115,8 @@ export function joinRoom(
   name: string,
   characterId: string,
   roomCode: string,
+  arenaId: ArenaId,
   ack: (ok: boolean, reason?: string) => void,
 ) {
-  ensureSocket().emit("join", { name, characterId, roomCode }, ack);
+  ensureSocket().emit("join", { name, characterId, roomCode, arenaId }, ack);
 }

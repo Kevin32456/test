@@ -168,6 +168,76 @@ body {
   color: var(--muted);
 }
 
+/* ===== 可重播的新手指南 ===== */
+
+.guide-panel {
+  margin: 0 0 16px;
+  border: 2px solid var(--line);
+  background: #1a1e2d;
+}
+
+.guide-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  color: var(--gold);
+  font-size: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.guide-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-panel summary::after {
+  content: "+";
+  color: var(--sakura);
+  font-size: 18px;
+}
+
+.guide-panel[open] summary::after {
+  content: "−";
+}
+
+.guide-summary-note {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.guide-content {
+  padding: 0 12px 11px;
+  border-top: 1px solid var(--line);
+}
+
+.guide-steps {
+  margin: 10px 0 8px;
+  padding-left: 22px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.guide-steps li + li {
+  margin-top: 4px;
+}
+
+.guide-steps strong {
+  color: #fff0c4;
+}
+
+.guide-tip {
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(224, 80, 58, 0.12);
+  color: #f4c1c5;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 /* ===== 表單 ===== */
 
 .connection-settings {
@@ -189,6 +259,14 @@ body {
   margin-bottom: 4px;
   font-size: 12px;
   color: var(--muted);
+}
+
+.arena-description {
+  min-height: 2.8em;
+  margin: -7px 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
 }
 
 .lobby-card input,
@@ -236,6 +314,16 @@ body {
   opacity: 0.4;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.lobby-card button.secondary-button {
+  border-color: var(--gold);
+  background: var(--indigo);
+  color: #fff0c4;
+}
+
+.lobby-card button.secondary-button:hover:not(:disabled) {
+  background: #2a3048;
 }
 
 /* ===== 分節標籤（既視感的「—」對稱線） ===== */
@@ -342,6 +430,27 @@ body {
   color: var(--text);
   text-align: center;
   letter-spacing: 0.15em;
+}
+
+.char-tagline {
+  display: block;
+  margin-top: 4px;
+  color: var(--gold);
+  font-size: 11px;
+  text-align: center;
+}
+
+.char-description {
+  display: -webkit-box;
+  min-height: 2.9em;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .char-status {

@@ -1,3 +1,5 @@
+import type { ArenaId, ArenaStage } from "./arenas.js";
+
 export type GamePhase = "lobby" | "countdown" | "playing" | "ended";
 
 export interface PlayerState {
@@ -32,6 +34,8 @@ export interface BallState {
 }
 
 export interface GameSnapshot {
+  arenaId: ArenaId;
+  arenaStage: ArenaStage;
   phase: GamePhase;
   matchSeq: number;
   players: PlayerState[];
@@ -55,6 +59,7 @@ export type ClientAction =
   | { type: "pass"; targetId: string }
   | { type: "blink"; x: number; y: number }
   | { type: "selectCharacter"; characterId: string }
+  | { type: "selectArena"; arenaId: ArenaId }
   | { type: "start" };
 
 export interface JoinPayload {
@@ -62,6 +67,8 @@ export interface JoinPayload {
   characterId: string;
   /** 舊版客戶端未提供時，伺服器會使用 MAIN。 */
   roomCode?: string;
+  /** 舊版客戶端未提供時，伺服器會使用預設競技場。 */
+  arenaId?: ArenaId;
 }
 
 export interface JoinedPayload {

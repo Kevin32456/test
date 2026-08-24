@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { io, type Socket } from "socket.io-client";
+import type { ArenaId } from "../src/shared/arenas.js";
 import type { ClientAction, GameSnapshot, JoinedPayload } from "../src/shared/types.js";
 
 const baseUrl = (process.env.STAGING_URL ?? "http://127.0.0.1:4318").replace(/\/+$/, "");
@@ -9,17 +10,18 @@ type PlayerSpec = {
   name: string;
   characterId: string;
   roomCode: string;
+  arenaId?: ArenaId;
 };
 
 const specs: PlayerSpec[] = [
-  { name: "FULL-A", characterId: "hat", roomCode },
-  { name: "FULL-B", characterId: "gauntlet", roomCode },
-  { name: "FULL-C", characterId: "spike", roomCode },
-  { name: "FULL-D", characterId: "coat", roomCode },
-  { name: "FULL-E", characterId: "ninja", roomCode },
-  { name: "FULL-F", characterId: "miko", roomCode },
-  { name: "FULL-G", characterId: "mechanic", roomCode },
-  { name: "FULL-H", characterId: "captain", roomCode },
+  { name: "FULL-A", characterId: "hat", roomCode, arenaId: "moon-garden" },
+  { name: "FULL-B", characterId: "gauntlet", roomCode, arenaId: "vermilion-court" },
+  { name: "FULL-C", characterId: "spike", roomCode, arenaId: "vermilion-court" },
+  { name: "FULL-D", characterId: "coat", roomCode, arenaId: "vermilion-court" },
+  { name: "FULL-E", characterId: "ninja", roomCode, arenaId: "vermilion-court" },
+  { name: "FULL-F", characterId: "miko", roomCode, arenaId: "vermilion-court" },
+  { name: "FULL-G", characterId: "mechanic", roomCode, arenaId: "vermilion-court" },
+  { name: "FULL-H", characterId: "captain", roomCode, arenaId: "vermilion-court" },
 ] as const;
 
 type RuntimeStatus = {
@@ -251,6 +253,10 @@ try {
 
   const roster = lastState(sessions[0]).players.map((player) => player.name).sort();
   assert.deepEqual(roster, specs.map((spec) => spec.name).sort());
+  assert.ok(
+    sessions.every((session) => lastState(session).arenaId === "moon-garden"),
+    "all eight clients must receive the first player's moon-garden arena",
+  );
 
   const rejectionReason = await connectAndExpectFull({
     name: "FULL-9",
@@ -268,6 +274,11 @@ try {
     "eight-player playing phase",
     () => sessions.some((session) => lastState(session).phase === "playing"),
     8000,
+  );
+  await waitForStatus(
+    "eight-player stage transition",
+    () => sessions.some((session) => ["test", "twist", "mastery"].includes(lastState(session).arenaStage)),
+    10000,
   );
 
   const network = await simulateJitterAndLoss(sessions);
@@ -313,6 +324,8 @@ try {
         clientCount: specs.length,
         version: joinedStatus.version,
         roster,
+        arenaId: lastState(sessions[0]).arenaId,
+        arenaStages: [...new Set(sessions.map((session) => lastState(session).arenaStage))],
         rejectionReason,
         network,
         stateEventsPerClient: sessions.slice(0, specs.length).map((session) => session.states.length),

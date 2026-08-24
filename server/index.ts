@@ -167,7 +167,12 @@ io.on("connection", (socket) => {
     }
 
     const room = getOrCreateRoom(roomCode);
-    const ok = room.addPlayer(socket.id, payload.name, payload.characterId);
+    const ok = room.addPlayer(
+      socket.id,
+      payload.name,
+      payload.characterId,
+      payload.arenaId,
+    );
     if (!ok) {
       removeRoomIfEmpty(roomCode, room);
       logEvent("join_rejected", {

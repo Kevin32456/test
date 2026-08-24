@@ -3,6 +3,14 @@ import { Sfx } from "../audio/Sfx";
 import { expLerp, expLerpAngle } from "../interpolation";
 import { CHARACTERS, getCharacter } from "@shared/characters";
 import { GAME, arenaCenter } from "@shared/constants";
+import {
+  DEFAULT_ARENA_ID,
+  getArena,
+  getArenaStageDefinition,
+  isValidArenaId,
+  type ArenaId,
+  type ArenaStage,
+} from "@shared/arenas";
 import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
 import type { GameSnapshot, PlayerState } from "@shared/types";
 import {
@@ -38,9 +46,14 @@ export class GameScene extends Phaser.Scene {
   private ballSprite!: Phaser.GameObjects.Arc;
   private ballGlow!: Phaser.GameObjects.Arc;
   private moveMarker!: Phaser.GameObjects.Arc;
+  private arenaLayer: Phaser.GameObjects.Graphics | null = null;
+  private arenaId: ArenaId = DEFAULT_ARENA_ID;
+  private arenaStage: ArenaStage = "teach";
+  private arenaStageBanner: Phaser.GameObjects.Text | null = null;
   private hud!: Phaser.GameObjects.Text;
   private threatBar!: Phaser.GameObjects.Graphics;
   private countdownBanner: Phaser.GameObjects.Text | null = null;
+  private countdownHint!: Phaser.GameObjects.Text;
   private deathPauseOverlay: Phaser.GameObjects.Rectangle | null = null;
   private deathPauseBanner: Phaser.GameObjects.Text | null = null;
   private endedBanner: Phaser.GameObjects.Text | null = null;
@@ -65,7 +78,7 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     Sfx.unlock();
-    this.drawArena();
+    this.drawArena(DEFAULT_ARENA_ID, "teach");
 
     for (const c of CHARACTERS) {
       const key = `char-${c.id}`;
@@ -106,6 +119,22 @@ export class GameScene extends Phaser.Scene {
       }))
       .setScrollFactor(0)
       .setDepth(100);
+
+    this.countdownHint = this.add
+      .text(
+        GAME.ARENA_WIDTH / 2,
+        GAME.ARENA_HEIGHT / 2 + 72,
+        "目標：活到最後\n右鍵走位／持球點隊友傳球\nSpace：Blink",
+        pixelTextStyle(PIXEL_FONT_SIZES.xs, {
+          color: "#d5d7e5",
+          backgroundColor: "rgba(16,18,24,0.82)",
+          padding: { x: 12, y: 8 },
+          align: "center",
+        }),
+      )
+      .setOrigin(0.5)
+      .setDepth(299)
+      .setVisible(false);
 
     this.passHoverRing = this.add
       .circle(0, 0, GAME.PLAYER_RADIUS + 16, 0x000000, 0)
@@ -158,6 +187,10 @@ export class GameScene extends Phaser.Scene {
     this.holderRings.clear();
     this.displayPlayers.clear();
     this.hoveredPassId = null;
+    this.arenaLayer?.destroy();
+    this.arenaLayer = null;
+    this.arenaStageBanner?.destroy();
+    this.arenaStageBanner = null;
   }
 
   update(_time: number, delta: number) {
@@ -238,27 +271,90 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private drawArena() {
-    const g = this.add.graphics();
+  private drawArena(arenaId: ArenaId, stage: ArenaStage) {
+    this.arenaLayer?.destroy();
+    this.arenaId = arenaId;
+    this.arenaStage = stage;
+
+    const arena = getArena(arenaId);
+    const palette = arena.palette;
+    const g = this.add.graphics().setDepth(-10);
+    this.arenaLayer = g;
     const c = arenaCenter();
     const r = GAME.ARENA_RADIUS;
 
-    g.fillStyle(0x0f1118, 1);
+    g.fillStyle(palette.background, 1);
     g.fillRect(0, 0, GAME.ARENA_WIDTH, GAME.ARENA_HEIGHT);
 
-    g.fillStyle(0x1b2430, 1);
+    g.fillStyle(palette.floor, 1);
     g.fillCircle(c.x, c.y, r);
 
-    g.lineStyle(1, 0x253041, 0.35);
-    for (let i = 1; i <= 3; i++) {
-      g.strokeCircle(c.x, c.y, (r * i) / 3);
-    }
-
-    g.lineStyle(4, 0x3d4f68, 1);
+    g.lineStyle(4, palette.border, 1);
     g.strokeCircle(c.x, c.y, r);
 
-    g.lineStyle(2, 0xe0503a, 0.35);
-    g.strokeCircle(c.x, c.y, r - 2);
+    if (arena.style === "vermilion-court") {
+      g.lineStyle(1, palette.grid, 0.35);
+      for (let i = 1; i <= 3; i++) {
+        g.strokeCircle(c.x, c.y, (r * i) / 3);
+      }
+      g.lineStyle(2, palette.accent, 0.35);
+      g.strokeCircle(c.x, c.y, r - 2);
+      return;
+    }
+
+    // 月影庭以路標與斜切動線改變讀圖；路標是純視覺，不加入碰撞。
+    g.lineStyle(2, palette.grid, 0.42);
+    g.strokeCircle(c.x, c.y, r * 0.52);
+    g.lineStyle(2, palette.accent, 0.2);
+    g.strokeCircle(c.x, c.y, r * 0.78);
+
+    const routePoints = [
+      { x: c.x, y: c.y - r * 0.55 },
+      { x: c.x + r * 0.55, y: c.y },
+      { x: c.x, y: c.y + r * 0.55 },
+      { x: c.x - r * 0.55, y: c.y },
+    ];
+    const drawPath = (points: { x: number; y: number }[], alpha: number) => {
+      if (points.length < 2) return;
+      g.lineStyle(3, palette.accent, alpha);
+      g.beginPath();
+      g.moveTo(points[0]!.x, points[0]!.y);
+      for (const point of points.slice(1)) {
+        g.lineTo(point.x, point.y);
+      }
+      g.strokePath();
+    };
+
+    if (stage === "teach") {
+      drawPath([routePoints[2]!, { x: c.x, y: c.y }, routePoints[0]!], 0.55);
+    } else if (stage === "test") {
+      drawPath([...routePoints, routePoints[0]!], 0.28);
+    } else if (stage === "twist") {
+      drawPath([routePoints[0]!, routePoints[2]!], 0.5);
+      drawPath([routePoints[1]!, routePoints[3]!], 0.5);
+    } else {
+      drawPath([...routePoints, routePoints[0]!], 0.22);
+      drawPath([routePoints[0]!, routePoints[2]!], 0.18);
+      drawPath([routePoints[1]!, routePoints[3]!], 0.18);
+    }
+
+    const activePoints =
+      stage === "teach" ? new Set([0, 2]) : new Set([0, 1, 2, 3]);
+
+    for (const [index, point] of routePoints.entries()) {
+      const active = activePoints.has(index);
+      g.fillStyle(palette.landmark, active ? 0.2 : 0.08);
+      g.fillCircle(point.x, point.y, 34);
+      g.lineStyle(2, palette.landmark, active ? 0.7 : 0.24);
+      g.strokeCircle(point.x, point.y, 24);
+      g.lineStyle(2, palette.accent, active ? 0.24 : 0.1);
+      g.strokeCircle(point.x, point.y, 34);
+    }
+
+    g.fillStyle(palette.accent, 0.14);
+    g.fillCircle(c.x, c.y, 34);
+    g.lineStyle(2, palette.accent, 0.55);
+    g.strokeCircle(c.x, c.y, 22);
   }
 
   private showMoveMarker(x: number, y: number) {
@@ -430,10 +526,60 @@ export class GameScene extends Phaser.Scene {
       this.endedBanner.destroy();
       this.endedBanner = null;
     }
+    if (this.arenaStageBanner) {
+      this.tweens.killTweensOf(this.arenaStageBanner);
+      this.arenaStageBanner.destroy();
+      this.arenaStageBanner = null;
+    }
     this.lastCountdownBeep = -1;
   }
 
+  private showArenaStageBanner(stage: ArenaStage) {
+    const definition = getArenaStageDefinition(stage);
+    if (!this.arenaStageBanner) {
+      this.arenaStageBanner = this.add
+        .text(GAME.ARENA_WIDTH / 2, 132, "", pixelTextStyle(PIXEL_FONT_SIZES.xs, {
+          color: "#fff4cf",
+          backgroundColor: "rgba(16,18,24,0.88)",
+          padding: { x: 14, y: 8 },
+          align: "center",
+        }))
+        .setOrigin(0.5)
+        .setDepth(105);
+    }
+
+    this.tweens.killTweensOf(this.arenaStageBanner);
+    this.arenaStageBanner
+      .setText(`${getArena(this.arenaId).name} · ${definition.title}\n${definition.prompt}`)
+      .setAlpha(1)
+      .setVisible(true);
+    this.tweens.add({
+      targets: this.arenaStageBanner,
+      delay: 1800,
+      duration: 700,
+      alpha: 0,
+      onComplete: () => this.arenaStageBanner?.setVisible(false),
+    });
+  }
+
   private applySnapshot(snapshot: GameSnapshot) {
+    const nextStage = snapshot.arenaStage ?? "teach";
+    const nextArenaId = isValidArenaId(snapshot.arenaId)
+      ? snapshot.arenaId
+      : DEFAULT_ARENA_ID;
+    const arenaChanged = nextArenaId !== this.arenaId;
+    const stageChanged = nextStage !== this.arenaStage;
+    if (arenaChanged || stageChanged) {
+      this.drawArena(nextArenaId, nextStage);
+    }
+    if (
+      stageChanged ||
+      (snapshot.phase === "countdown" && this.prevSnapshot?.phase !== "countdown")
+    ) {
+      this.showArenaStageBanner(nextStage);
+      Sfx.arenaStage(nextStage);
+    }
+
     this.playSnapshotSfx(snapshot);
 
     if (snapshot.matchSeq !== this.lastMatchSeq) {
@@ -447,6 +593,9 @@ export class GameScene extends Phaser.Scene {
 
     if (snapshot.phase === "countdown") {
       const sec = Math.ceil(snapshot.countdownSec ?? 0);
+      this.countdownHint.setText(
+        `場地：${getArena(this.arenaId).name}\n${getArenaStageDefinition(this.arenaStage).title}\n目標：活到最後\n右鍵走位／持球點隊友傳球\nSpace：Blink`,
+      );
       if (!this.countdownBanner) {
         this.countdownBanner = this.add
           .text(GAME.ARENA_WIDTH / 2, GAME.ARENA_HEIGHT / 2, "", pixelTextStyle(PIXEL_FONT_SIZES.countdown, {
@@ -459,8 +608,10 @@ export class GameScene extends Phaser.Scene {
       }
       this.countdownBanner.setText(sec > 0 ? String(sec) : "開始！");
       this.countdownBanner.setVisible(true);
+      this.countdownHint.setVisible(true);
     } else if (this.countdownBanner) {
       this.countdownBanner.setVisible(false);
+      this.countdownHint.setVisible(false);
     }
 
     if (snapshot.deathPauseMs > 0) {

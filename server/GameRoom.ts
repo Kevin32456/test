@@ -11,6 +11,12 @@ import {
   getCharacter,
   isValidCharacterId,
 } from "../src/shared/characters.js";
+import {
+  DEFAULT_ARENA_ID,
+  getArenaStage,
+  isValidArenaId,
+} from "../src/shared/arenas.js";
+import type { ArenaId } from "../src/shared/arenas.js";
 import type {
   BallState,
   ClientAction,
@@ -42,7 +48,9 @@ interface InternalPlayer {
 
 export class GameRoom {
   private players = new Map<string, InternalPlayer>();
+  private arenaId: ArenaId = DEFAULT_ARENA_ID;
   private phase: GamePhase = "lobby";
+  private roundTimeSec = 0;
   private matchSeq = 0;
   private ballHolderId: string | null = null;
   private holdTimeSec = 0;
@@ -77,7 +85,12 @@ export class GameRoom {
     this.onBroadcast(immediate);
   }
 
-  addPlayer(id: string, name: string, characterId: string): boolean {
+  addPlayer(
+    id: string,
+    name: string,
+    characterId: string,
+    requestedArenaId?: string,
+  ): boolean {
     if (typeof name !== "string" || typeof characterId !== "string") {
       return false;
     }
@@ -85,6 +98,10 @@ export class GameRoom {
     if (this.phase !== "lobby" && this.phase !== "ended") return false;
     if (!isValidCharacterId(characterId)) return false;
     if (!this.isCharacterAvailable(characterId)) return false;
+
+    if (this.players.size === 0 && isValidArenaId(requestedArenaId)) {
+      this.arenaId = requestedArenaId;
+    }
 
     const index = this.players.size;
     const spawn = this.spawnPoint(index);
@@ -167,6 +184,13 @@ export class GameRoom {
       return;
     }
 
+    if (action.type === "selectArena") {
+      if (this.phase !== "lobby") return;
+      this.arenaId = action.arenaId;
+      this.onBroadcast(true);
+      return;
+    }
+
     if (
       this.phase !== "playing" ||
       !player.alive ||
@@ -235,6 +259,8 @@ export class GameRoom {
 
   getSnapshot(): GameSnapshot {
     return {
+      arenaId: this.arenaId,
+      arenaStage: getArenaStage(this.roundTimeSec),
       phase: this.phase,
       matchSeq: this.matchSeq,
       players: [...this.players.values()].map((p) => ({
@@ -283,6 +309,7 @@ export class GameRoom {
 
   private resetLobby() {
     this.phase = "lobby";
+    this.roundTimeSec = 0;
     this.ballHolderId = null;
     this.holdTimeSec = 0;
     this.flightPressureSec = 0;
@@ -326,6 +353,7 @@ export class GameRoom {
     this.pendingEvent = true;
     this.matchSeq += 1;
     this.phase = "playing";
+    this.roundTimeSec = 0;
     this.countdownSec = null;
     this.deathPauseMs = 0;
     this.eliminatedPlayerName = null;
@@ -453,6 +481,8 @@ export class GameRoom {
       this.broadcast();
       return;
     }
+
+    this.roundTimeSec += dt;
 
     if (this.deathPauseMs > 0) {
       this.deathPauseMs = Math.max(0, this.deathPauseMs - dt * 1000);

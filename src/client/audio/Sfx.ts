@@ -1,3 +1,5 @@
+import type { ArenaStage } from "@shared/arenas";
+
 let ctx: AudioContext | null = null;
 
 function getCtx(): AudioContext | null {
@@ -46,4 +48,15 @@ export const Sfx = {
     setTimeout(() => tone(784, 0.14, "triangle"), 90);
   },
   countdown: () => tone(440, 0.04, "sine", 0.05),
+  arenaStage: (stage: ArenaStage) => {
+    const notes: Record<ArenaStage, number[]> = {
+      teach: [392],
+      test: [392, 523],
+      twist: [523, 659, 523],
+      mastery: [523, 659, 784],
+    };
+    notes[stage].forEach((frequency, index) => {
+      setTimeout(() => tone(frequency, 0.06, "triangle", 0.045), index * 75);
+    });
+  },
 };

@@ -1,4 +1,5 @@
 import type { ClientAction, JoinPayload } from "../src/shared/types.js";
+import { isValidArenaId } from "../src/shared/arenas.js";
 import { isValidCharacterId } from "../src/shared/characters.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -15,7 +16,8 @@ export function isJoinPayload(value: unknown): value is JoinPayload {
     typeof value.name === "string" &&
     typeof value.characterId === "string" &&
     isValidCharacterId(value.characterId) &&
-    (value.roomCode === undefined || typeof value.roomCode === "string")
+    (value.roomCode === undefined || typeof value.roomCode === "string") &&
+    (value.arenaId === undefined || isValidArenaId(value.arenaId))
   );
 }
 
@@ -27,6 +29,8 @@ export function isClientAction(value: unknown): value is ClientAction {
       return true;
     case "selectCharacter":
       return typeof value.characterId === "string";
+    case "selectArena":
+      return isValidArenaId(value.arenaId);
     case "move":
     case "moveInput":
     case "blink":
