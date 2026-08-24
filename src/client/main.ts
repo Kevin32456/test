@@ -40,6 +40,7 @@ let isJoining = false;
 let isInPractice = false;
 let pendingRoomCode = DEFAULT_ROOM_CODE;
 let activeRoomCode = DEFAULT_ROOM_CODE;
+let hasCompletedRound = false;
 
 const overlay = document.createElement("div");
 overlay.className = "overlay-panel";
@@ -365,6 +366,7 @@ function renderRoundResult(snapshot: GameSnapshot) {
 
   const me = snapshot.players.find((p) => p.id === playerId);
   resultPanel.hidden = false;
+  hasCompletedRound = true;
   resultKicker.textContent = t("resultKicker");
   resultTitle.textContent = snapshot.winnerName
     ? t("resultWinner", { winner: snapshot.winnerName })
@@ -413,7 +415,7 @@ function renderLobby(snapshot: GameSnapshot) {
     });
     startBtn.style.display = hasJoined ? "block" : "none";
     startBtn.disabled = snapshot.roomCount < GAME.MIN_PLAYERS_TO_START;
-    startBtn.textContent = t("start");
+    startBtn.textContent = hasCompletedRound ? t("replay") : t("start");
     joinBtn.textContent = hasJoined ? t("joined") : t("join");
     joinBtn.disabled = hasJoined || !selectedCharacterId;
     practiceBtn.style.display = hasJoined ? "none" : "block";

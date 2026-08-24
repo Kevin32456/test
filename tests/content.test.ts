@@ -66,6 +66,7 @@ const englishStrings = [
   t("lobbyDesc"),
   t("guideMove"),
   t("resultNext"),
+  t("replay"),
   ...CHARACTERS.flatMap((character) => [
     characterText(character.id, 0),
     characterText(character.id, 1),
