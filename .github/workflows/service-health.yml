@@ -7,6 +7,10 @@ on:
         description: "Public /health, /ready and /metrics base URL"
         required: true
         type: string
+      expected_commit:
+        description: "Optional full or short Git commit expected from /ready"
+        required: false
+        type: string
 
 jobs:
   check:
@@ -27,4 +31,5 @@ jobs:
       - name: Check service endpoints
         env:
           SERVICE_URL: ${{ inputs.service_url }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
         run: npm run ops:check

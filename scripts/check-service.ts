@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 const baseUrl = (process.env.SERVICE_URL ?? process.env.STAGING_URL ?? "http://127.0.0.1:4318").replace(/\/+$/, "");
 const timeoutMs = Math.max(1000, Number(process.env.SERVICE_TIMEOUT_MS ?? 5000));
+const expectedCommit = process.env.EXPECTED_COMMIT?.trim() ?? "";
 
 async function readJson(path: string) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -33,10 +34,17 @@ try {
   assert.equal(ready.ready, true, "/ready reported ready=false");
   assert.equal(typeof ready.commit, "string", "/ready is missing commit identity");
   assert.ok(String(ready.commit).length > 0, "/ready returned an empty commit identity");
+  if (expectedCommit) {
+    assert.ok(
+      String(ready.commit).startsWith(expectedCommit),
+      `/ready commit ${String(ready.commit)} does not match EXPECTED_COMMIT ${expectedCommit}`,
+    );
+  }
 
   console.log(JSON.stringify({
     ok: true,
     baseUrl,
+    expectedCommit: expectedCommit || null,
     health,
     ready,
     metrics: { bytes: metrics.length, checked: true },

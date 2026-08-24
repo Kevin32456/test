@@ -21,7 +21,7 @@
 - `GET /ready`：回報 `ready`、版本、Git commit、啟動時間、uptime、房間、玩家與連線數；收到 SIGTERM 後會回 503，讓平台停止送入新流量。
 - `GET /metrics`：Prometheus text format 的 build identity、process、房間、連線、加入拒絕、斷線與 invalid action counters。
 - stdout：每行一筆 JSON log，包含 `server_started`、`join_accepted`、`join_rejected`、`action_rejected`、`connection_closed`、`process_error`、版本與 commit identity。
-- `npm run ops:check`：一次檢查 `/health`、`/ready` 與 `/metrics`；GitHub Actions 的 `Service health gate` 可手動帶入正式 URL 重跑同一檢查。
+- `npm run ops:check`：一次檢查 `/health`、`/ready` 與 `/metrics`；設定 `EXPECTED_COMMIT` 時，還會要求 `/ready.commit` 以指定完整／短 commit 開頭；GitHub Actions 的 `Service health gate` 可手動帶入 URL 與預期 commit 重跑同一檢查。
 
 最低監控告警：
 
@@ -39,7 +39,7 @@
 - 以 Prometheus-compatible collector 抓取 `/metrics`；至少保存 active connections、rooms、players、joins、disconnects 與 invalid actions 的時間序列。
 - 告警目的地、log drain 與正式 URL 需在 Render／監控服務帳號中配置；本 repo 只提供可被監控的 endpoint 與結構化訊號，不假裝已替使用者建立外部帳號。
 
-部署後先記錄：`SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`，再執行 `npm run test:staging`、`npm run test:staging:stress`、`npm run test:staging:stages`、`npm run test:staging:network`、`npm run test:staging:replay` 與 `npm run test:staging:long`。長 replay 固定為 3 回合 × 15 秒，用來觀察連續重玩與清理。
+部署後先記錄：`SERVICE_URL=https://test-vccb.onrender.com EXPECTED_COMMIT=<deploy-commit> npm run ops:check`，再執行 `npm run test:staging`、`npm run test:staging:stress`、`npm run test:staging:stages`、`npm run test:staging:network`、`npm run test:staging:replay` 與 `npm run test:staging:long`。長 replay 固定為 3 回合 × 15 秒，用來觀察連續重玩與清理。
 
 ## 發佈閘門
 
@@ -52,7 +52,7 @@
 5. 本機 production `/ready`、`npm run test:staging`、`npm run test:staging:stages`、`npm run test:staging:network`、`npm run test:staging:stress`、`npm run test:staging:long`
 6. `git push origin main`
 7. Render Deploy latest commit
-8. 確認公開 `/ready` 的 `startedAt`／版本已變更，再重跑公開 smoke、stages、network、stress、replay
+8. 確認公開 `/ready` 的 `startedAt`／版本已變更，再用 `EXPECTED_COMMIT` 重跑 `ops:check`，接著重跑公開 smoke、stages、network、stress、replay、long replay
 
 不要只看 Render deploy 顯示成功；若公開 bundle 沒有最新功能字串或 `/ready` 啟動時間未更新，視為尚未部署。
 
