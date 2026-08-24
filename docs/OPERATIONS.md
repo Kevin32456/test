@@ -6,6 +6,13 @@
 - 正式多人服務必須使用不會休眠的常駐 Web Service，並先維持 **單一 instance**。目前房間、玩家、Socket.IO 狀態都在單一 Node process 記憶體內；在沒有 Redis adapter／外部房間服務前，不可直接水平擴展多 instance。
 - SteamPipe 只配送 Windows 遊戲檔案；即時多人伺服器仍由獨立的常駐服務提供，不會由 Steam 自動代管。
 
+## v1 正式方案決策
+
+- 正式環境使用與 staging 分離的 Render Web Service，選擇不休眠的付費方案；`render.yaml` 的 Free 設定只代表 staging，不可直接當正式多人服務。
+- v1 固定單一 instance，讓同一個 Node process 持有所有房間與 Socket.IO 狀態；先以穩定性與可回滾為優先，不在沒有 Redis／房間狀態同步前擴成多 instance。
+- 正式服務建立獨立 URL 與環境變數；Windows／Steam 客戶端只連正式 URL，staging URL 僅供測試。正式 URL 尚未建立前，不把 staging 當作 Steam 發行端點。
+- 上線前需在正式 URL 完成同一組 typecheck、內容、smoke、8 人與 replay gate；Free staging 的冷啟動結果不作為正式 SLA。
+
 ## 健康檢查與監控
 
 服務提供：
@@ -22,6 +29,13 @@
 3. `shuai_gou_joins_total{result="rejected"}` 在短時間異常升高。
 4. `process_error` 出現任何 `uncaught_exception` 或持續增加的 `unhandled_rejection`。
 5. `shuai_gou_rooms`／`shuai_gou_players` 在所有客戶離開後未回到 0。
+
+正式環境設定最低外部監控：
+
+- HTTP monitor 每 30–60 秒檢查 `/ready`，連續兩次非 200 或 `ready:false` 即告警。
+- 以平台 log drain 或集中式 log viewer 保留 stdout JSON；搜尋 `process_error`、`join_rejected`、`action_rejected`、`connection_closed`。
+- 以 Prometheus-compatible collector 抓取 `/metrics`；至少保存 active connections、rooms、players、joins、disconnects 與 invalid actions 的時間序列。
+- 告警目的地、log drain 與正式 URL 需在 Render／監控服務帳號中配置；本 repo 只提供可被監控的 endpoint 與結構化訊號，不假裝已替使用者建立外部帳號。
 
 部署後先記錄：`STAGING_URL=https://test-vccb.onrender.com npm run test:staging`、`npm run test:staging:stress` 與 `npm run test:staging:replay`。
 
