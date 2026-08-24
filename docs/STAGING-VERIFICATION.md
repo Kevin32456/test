@@ -7,14 +7,14 @@
 ## 版本證據
 
 - URL：<https://test-vccb.onrender.com>
-- Render 已驗證的最新 deployment commit：`290303f`（`test: verify complete arena stage sequence`）；遊戲 bundle 仍包含 `cfb930f` 的重玩入口修正
+- Render 已驗證的最後一個功能性 deployment commit：`290303f`（`test: verify complete arena stage sequence`）；遊戲 bundle 仍包含 `cfb930f` 的重玩入口修正。之後的 `085c5fa` 僅更新 CI／交接文件。
 - 公開首頁最新前端 bundle：`/assets/index-B1Iq1mcw.js`
 - 公開 `/ready`：HTTP 200，`ready: true`，測試後 `rooms: 0`、`players: 0`、`connections: 0`
 - 公開 `/metrics`：HTTP 200，包含 `shuai_gou_ready`、連線、房間與 invalid action 指標
 - `SERVICE_URL=https://test-vccb.onrender.com npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 均正常，測試後房間／玩家／連線為 0
 - 公開首頁與本機 `dist/assets/index-B1Iq1mcw.js` 的 SHA-256 相同（`e9f08044dc87f8ef0015494e1f64aeffc07402021e72908e8cc733a9f4e238a2`）；新版動態 chunk 包含 `arenaStage`
 - 公開 CSS 已切換至 `index-DKzjsNtz.css`，包含 420px 以下入口收窄規則；目前桌面 viewport `1280×720` 無橫向溢出，實體 390px 仍需真人裝置確認
-- 最近一次通過公開驗證觀測的 `/ready.startedAt`：`2026-08-24T18:31:13.024Z`
+- 最後一次功能性公開驗證觀測的 `/ready.startedAt`：`2026-08-24T18:31:13.024Z`
 
 ## 已通過
 
