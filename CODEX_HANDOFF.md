@@ -35,6 +35,7 @@
 - 新增 `/metrics`、graceful shutdown、process error log 與 `docs/OPERATIONS.md`；正式方案維持單 instance，回滾以 Render previous deploy 或 `git revert` 為準
 - 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開 bundle hash 與本機 `dist` 一致，`/ready`、`/metrics` 與新版場地／練習房均已驗證
 - 新增 `tests/staging.stress.ts` 與 `npm run test:staging:stress`：8 人滿房、第 9 人拒絕、應用層延遲／抖動／丟失 action、斷線清理與 8 人重連
+- 新增 `tests/staging.network.ts` 與 `npm run test:staging:network`：量測真實 staging WebSocket 的連線／加入時間、狀態間隔 jitter，並驗證 disconnect→reconnect→重新加入
 - 瀏覽器 QA 修正遠端模式空 URL 誤連目前頁面的問題；公開版已驗證空 URL 阻止加入、有效 Render URL 可加入，console 無 error/warn
 - `GameScene`／`PracticeScene` 會載入專案內 8 個正式 SVG 角色圖示；保留 canvas fallback，避免素材載入失敗阻斷 playtest
 - 大廳新增可收合／可重看的玩法指南，倒數畫面補上目標與主要操作提示，結算狀態明確顯示勝者與下一局
@@ -133,6 +134,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標，實際雙人回合顯示勝者／出局原因／下一步／準備下一局；清理後 `/ready` 回到 0 房／0 人／0 連線
 - 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；最新 8 人內容以公開 staging stress script 重跑，跨裝置仍待真人驗證
 - `npm run test:staging:replay` 公開 Render（最新 staging）：通過；4 回合 × 5 秒、每回合 2 客戶與 47 個 action，state events 約 177–181／客戶，最後 `rooms:0`／`players:0`／`connections:0`
+- `npm run test:staging:network` 公開 Render（最新 staging）：通過；connect 約 675ms、join ack 約 160ms、127 個樣本，狀態間隔 p95 51ms／最大 819ms，真實 disconnect／reconnect／重新加入與清理成功
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
@@ -150,6 +152,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - desktop prototype 使用 Electron 預設圖示；portable artifact 的 Authenticode 狀態為 `NotSigned`，尚未配置正式 icon／Windows code signing
 - desktop 預設啟動本機 server；遠端 URL／房間碼已可測試，但尚未有常駐遠端部署、Steam App ID、Steam Lobby
 - Render staging 已反映最新 slice；公開 8 人測試的 jitter/loss 仍是應用層 action 模擬，不等同真實 transport-level 丟包，跨裝置延遲與長時間真人壓測仍待完成
+- 公開網路基線已量測單一執行環境的連線與狀態間隔；這不代表不同 ISP／裝置的 transport-level 丟包 SLA
 - `npm run test:staging:stress` 的延遲／抖動／丟失是測試客戶端 action 模擬，不等同於作業系統或路由器層的封包損失
 - 8 分頁瀏覽器 QA 仍是同一台機器／網路，尚未取代 8 台不同裝置／網路的真人對局證據
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
