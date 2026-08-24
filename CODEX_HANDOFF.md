@@ -143,6 +143,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；最新 8 人內容以公開 staging stress script 重跑，跨裝置仍待真人驗證
 - `npm run test:staging:replay` 公開 Render（最新 staging）：通過；短 replay 4 回合 × 5 秒，另完成長 replay 3 回合 × 15 秒（每回合約 139–140 actions、404–409 state events／客戶），最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:network` 公開 Render（最新 staging）：通過；connect 約 682ms、join ack 約 161ms、128 個樣本，狀態間隔 p95 50ms／最大 813ms，真實 disconnect／reconnect／重新加入與清理成功；第一次部署後執行曾遇到 staging 重啟，重試通過
+- 公開 Render 運維健康檢查（`7ddad85`）：通過；`/ready` 與 `/metrics` 回報實際 commit `7ddad854b2c09b5149721561dac197a3fb7e2bc5`，`build_info` 可用於部署／回滾辨識，測試後 0 房／0 人／0 連線
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
