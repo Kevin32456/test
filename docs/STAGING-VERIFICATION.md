@@ -7,7 +7,8 @@
 ## 版本證據
 
 - URL：<https://test-vccb.onrender.com>
-- GitHub HEAD：`7cbf411`（`docs: align handoff with pushed operations gate`）
+- Render 已驗證的內容 commit：`7cbf411`（`docs: align handoff with pushed operations gate`）
+- GitHub 後續紀錄 commit：`ceba1c8`（本文件與 handoff 更新；不改變遊戲 bundle）
 - 公開 `/ready`：HTTP 200，`ready: true`，測試後 `rooms: 0`、`players: 0`、`connections: 0`
 - 公開 `/metrics`：HTTP 200，包含 `shuai_gou_ready`、連線、房間與 invalid action 指標
 - 公開首頁與本機 `dist/assets/index-DNgnsZ5W.js` 的 SHA-256 相同；新版動態 chunk 包含 `arenaStage`
