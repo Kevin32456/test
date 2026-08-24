@@ -12,6 +12,7 @@
 - 公開 `/ready`：HTTP 200，`ready: true`，測試後 `rooms: 0`、`players: 0`、`connections: 0`
 - 公開 `/metrics`：HTTP 200，包含 `shuai_gou_ready`、連線、房間與 invalid action 指標
 - 公開首頁與本機 `dist/assets/index-DNgnsZ5W.js` 的 SHA-256 相同；新版動態 chunk 包含 `arenaStage`
+- 公開 CSS 已切換至 `index-DKzjsNtz.css`，包含 420px 以下入口收窄規則；目前桌面 viewport `1280×720` 無橫向溢出，實體 390px 仍需真人裝置確認
 - 最近一次通過公開網路測試觀測的 `/ready.startedAt`：`2026-08-24T17:55:35.409Z`
 
 ## 已通過

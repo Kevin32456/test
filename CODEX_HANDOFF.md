@@ -158,7 +158,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
 - Cloudflare 快速隧道無 SLA；關機即斷
-- 本輪遊戲內容部署基線為 GitHub `7cbf411`，網路測試與維運紀錄後續已推送至 `e1c07cb`；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
+- 本輪遊戲內容部署基線為 GitHub `7cbf411`，網路 gate、月影庭 evidence 與 390px 入口加固後續已推送至 `bc9f365`；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則
 - 角色描述仍是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞或特殊回合
 - 第二競技場已完成同機 8 人、公開長 replay 與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與真人長時間重玩意願驗證
