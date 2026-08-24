@@ -18,6 +18,8 @@ const isProd = process.env.NODE_ENV === "production";
 const SERVICE_NAME = "shuai-gou-server";
 const APP_VERSION =
   process.env.APP_VERSION ?? process.env.RENDER_GIT_COMMIT?.slice(0, 12) ?? "dev";
+const DEPLOY_COMMIT =
+  process.env.RENDER_GIT_COMMIT ?? process.env.GIT_COMMIT ?? APP_VERSION;
 const STARTED_AT = new Date().toISOString();
 const STARTED_AT_MS = Date.now();
 let activeConnections = 0;
@@ -36,6 +38,7 @@ function logEvent(event: string, details: LogDetails = {}) {
       timestamp: new Date().toISOString(),
       service: SERVICE_NAME,
       version: APP_VERSION,
+      commit: DEPLOY_COMMIT,
       event,
       ...details,
     }),
@@ -109,6 +112,7 @@ function getRuntimeStatus() {
     ready: !isShuttingDown,
     service: SERVICE_NAME,
     version: APP_VERSION,
+    commit: DEPLOY_COMMIT,
     startedAt: STARTED_AT,
     uptimeSec: Math.floor(process.uptime()),
     phase,
@@ -124,6 +128,10 @@ function sendRuntimeStatus(res: express.Response) {
   res.status(status.ready ? 200 : 503).json(status);
 }
 
+function metricLabel(value: string) {
+  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "\\n");
+}
+
 app.get("/health", (_req, res) => {
   sendRuntimeStatus(res);
 });
@@ -134,6 +142,9 @@ app.get("/ready", (_req, res) => {
 
 app.get("/metrics", (_req, res) => {
   const metricLines = [
+    "# HELP shuai_gou_build_info Build identity for rollback and deployment correlation.",
+    "# TYPE shuai_gou_build_info gauge",
+    `shuai_gou_build_info{version="${metricLabel(APP_VERSION)}",commit="${metricLabel(DEPLOY_COMMIT)}"} 1`,
     "# HELP shuai_gou_ready Whether the process is accepting new work.",
     "# TYPE shuai_gou_ready gauge",
     `shuai_gou_ready ${isShuttingDown ? 0 : 1}`,

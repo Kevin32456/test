@@ -22,6 +22,7 @@ try {
   assert.equal(metricsResponse.ok, true, `/metrics returned HTTP ${metricsResponse.status}`);
   const metrics = await metricsResponse.text();
   for (const metric of [
+    "shuai_gou_build_info",
     "shuai_gou_ready",
     "shuai_gou_active_connections",
     "shuai_gou_rooms",
@@ -30,6 +31,8 @@ try {
     assert.match(metrics, new RegExp(`^${metric}(?:\\s|\\{)`, "m"), `missing metric ${metric}`);
   }
   assert.equal(ready.ready, true, "/ready reported ready=false");
+  assert.equal(typeof ready.commit, "string", "/ready is missing commit identity");
+  assert.ok(String(ready.commit).length > 0, "/ready returned an empty commit identity");
 
   console.log(JSON.stringify({
     ok: true,

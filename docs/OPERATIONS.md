@@ -18,18 +18,19 @@
 服務提供：
 
 - `GET /health`：供 Render／容器 liveness 檢查；正常回傳 200 JSON。
-- `GET /ready`：回報 `ready`、版本、啟動時間、uptime、房間、玩家與連線數；收到 SIGTERM 後會回 503，讓平台停止送入新流量。
-- `GET /metrics`：Prometheus text format 的 process、房間、連線、加入拒絕、斷線與 invalid action counters。
-- stdout：每行一筆 JSON log，包含 `server_started`、`join_accepted`、`join_rejected`、`action_rejected`、`connection_closed`、`process_error` 與停止事件。
+- `GET /ready`：回報 `ready`、版本、Git commit、啟動時間、uptime、房間、玩家與連線數；收到 SIGTERM 後會回 503，讓平台停止送入新流量。
+- `GET /metrics`：Prometheus text format 的 build identity、process、房間、連線、加入拒絕、斷線與 invalid action counters。
+- stdout：每行一筆 JSON log，包含 `server_started`、`join_accepted`、`join_rejected`、`action_rejected`、`connection_closed`、`process_error`、版本與 commit identity。
 - `npm run ops:check`：一次檢查 `/health`、`/ready` 與 `/metrics`；GitHub Actions 的 `Service health gate` 可手動帶入正式 URL 重跑同一檢查。
 
 最低監控告警：
 
 1. `/ready` 非 200 超過 2 次或 60 秒。
-2. `shuai_gou_active_connections` 突然歸零，但仍有玩家流量。
-3. `shuai_gou_joins_total{result="rejected"}` 在短時間異常升高。
-4. `process_error` 出現任何 `uncaught_exception` 或持續增加的 `unhandled_rejection`。
-5. `shuai_gou_rooms`／`shuai_gou_players` 在所有客戶離開後未回到 0。
+2. `shuai_gou_build_info` 的 commit 與預期 deployment 不一致。
+3. `shuai_gou_active_connections` 突然歸零，但仍有玩家流量。
+4. `shuai_gou_joins_total{result="rejected"}` 在短時間異常升高。
+5. `process_error` 出現任何 `uncaught_exception` 或持續增加的 `unhandled_rejection`。
+6. `shuai_gou_rooms`／`shuai_gou_players` 在所有客戶離開後未回到 0。
 
 正式環境設定最低外部監控：
 

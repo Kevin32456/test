@@ -33,6 +33,7 @@
 - staging 改用 `dist-server` 編譯結果啟動；新增 `/ready`、版本／uptime／房間／連線狀態
 - 新增結構化 JSON server log（啟動、連線、加入拒絕／成功、斷線 reason）與 `npm run test:staging`
 - 新增 `/metrics`、graceful shutdown、process error log 與 `docs/OPERATIONS.md`；正式方案維持單 instance，回滾以 Render previous deploy 或 `git revert` 為準
+- `/ready`、`/metrics` 與 JSON log 已補 Git commit identity；可用於監控確認實際 build 與回滾目標，不再只依賴固定的 `version=staging`
 - 新增 `scripts/check-service.ts`、`npm run ops:check` 與手動 GitHub Actions health gate；正式 URL 建立後可重跑同一組健康檢查
 - 已取得 Render staging URL：`https://test-vccb.onrender.com`；公開 bundle hash 與本機 `dist` 一致，`/ready`、`/metrics` 與新版場地／練習房均已驗證
 - 新增 `tests/staging.stress.ts` 與 `npm run test:staging:stress`：8 人滿房、第 9 人拒絕、應用層延遲／抖動／丟失 action、斷線清理與 8 人重連
