@@ -82,7 +82,7 @@
 - `scripts/generate-character-assets.ts`、`public/assets/characters/` — 正式角色圖示與可重建素材流程
 - `src/client/scenes/PracticeScene.ts` — 單人練習房的教學步驟、練習搭檔與非致命追球狗
 - `src/shared/characters.ts` — 角色選角風格與描述資料
-- `tests/server.test.ts`、`tests/staging.smoke.ts`、`tests/staging.stress.ts`、`tests/staging.stages.ts`、`.github/workflows/ci.yml` — focused tests、staging smoke、8 人 stress／階段 gate、CI
+- `tests/server.test.ts`、`tests/content.test.ts`、`tests/layout.smoke.cjs`、`tests/staging.smoke.ts`、`tests/staging.stress.ts`、`tests/staging.stages.ts`、`.github/workflows/ci.yml` — focused tests、素材／雙語／390px layout、staging smoke、8 人 stress／階段 gate、CI
 - GitHub Actions CI 已加入 `npm run test:content` 與本機 production `npm run test:staging:stages`；後續內容變更會先經過雙語／素材與四階段同步 gate
 - `render.yaml`、`Dockerfile`、`package.json` — Render／Docker 編譯後啟動設定
 - `STEAM_RELEASE_CHECKLIST.md` — Steamworks、SteamPipe、Windows 簽章與商店素材缺口
@@ -130,13 +130,14 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm test`：通過；arena join/action 驗證、房間 arena snapshot 與既有倒數離場測試通過
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯
 - `npm run test:content`：通過；8 個角色 SVG、2 個競技場、teach／test／twist／mastery 順序與繁中／英文字串完整
+- `npm run test:layout`：通過；Electron `390×844` 下繁中／英文大廳與結算文字 fixture 均無水平溢位／文字裁切，主要控制項均在視窗內；實體手機仍待測
 - `npm run test:staging:replay`：通過；本機 3 局 × 3 秒重玩、每局多人加入／playing／Moon Garden／斷線清理，最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production（新版 arena stage）：通過；8 人同房、第一位選月影庭後 8/8 收到 `moon-garden`、第 9 人拒絕、192 個延遲／丟失 action、stage 已進入 `test`、斷線與重連清理成功
 - 本機第二競技場瀏覽器 smoke：通過；第一位玩家選月影庭後，第二位以朱印圓場加入仍被房間快照校正為月影庭；大廳切換可同步到兩頁，兩頁 canvas 均出現月庭四路標／菱形動線，console 無 error/warn
 - 本機階段畫面 smoke：通過；canvas 顯示月影庭 teach 階段的單一路線、亮／暗月燈與階段文字提示，兩頁 console 無 error/warn
 - 本機英文內容 smoke：通過；語言切換後角色 SVG 8/8 完整載入，練習房英文畫面完成 `1/3 → 2/3 → 3/3`，Phaser canvas 無 asset error
 - 本機結算 smoke：通過；兩名玩家實際對局後顯示勝者、本人出局、出局原因、下一步與下一局準備入口
-- 小螢幕入口 smoke：通過；390×844 下競技場選單、加入房間與練習房按鈕可見可操作，viewport 已恢復預設
+- 小螢幕入口 smoke：通過；390×844 下競技場選單、加入房間與練習房按鈕可見可操作，viewport 已恢復預設；新增 Electron layout gate 驗證繁中／英文無水平溢位／文字裁切
 - 公開瀏覽器 QA（最新 staging）：通過；單人練習完成 1/3→2/3→3/3，繁中／英文切換、8 個正式 SVG 圖示載入、兩個分頁同步月影庭與四月燈路標，實際雙人回合顯示勝者／出局原因／下一步，結算後回到大廳顯示 `Play again`；清理後 `/ready` 回到 0 房／0 人／0 連線
 - 公開 8 分頁瀏覽器 QA（上一版 baseline）：通過；8/8 逐頁加入、滿房自動倒數、8/8 Phaser canvas、8/8 無 console error/warn；最新 8 人內容以公開 staging stress script 重跑，跨裝置仍待真人驗證
 - `npm run test:staging:replay` 公開 Render（最新 staging）：通過；短 replay 4 回合 × 5 秒，另完成長 replay 3 回合 × 15 秒（每回合約 139–140 actions、404–409 state events／客戶），最後 `rooms:0`／`players:0`／`connections:0`
@@ -160,7 +161,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - Render staging 已反映最新 slice；公開 8 人測試的 jitter/loss 仍是應用層 action 模擬，不等同真實 transport-level 丟包，跨裝置延遲與長時間真人壓測仍待完成
 - 公開網路基線已量測單一執行環境的連線與狀態間隔；這不代表不同 ISP／裝置的 transport-level 丟包 SLA
 - `npm run test:staging:stress` 的延遲／抖動／丟失是測試客戶端 action 模擬，不等同於作業系統或路由器層的封包損失
-- 8 分頁瀏覽器 QA 仍是同一台機器／網路，尚未取代 8 台不同裝置／網路的真人對局證據
+- Electron 390×844 layout gate 已通過，但仍不能取代實體手機字體／輸入測試；8 分頁瀏覽器 QA 也仍是同一台機器／網路，尚未取代 8 台不同裝置／網路的真人對局證據
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
 - Cloudflare 快速隧道無 SLA；關機即斷

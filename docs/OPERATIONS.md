@@ -47,7 +47,7 @@
 1. `npm run typecheck`
 2. `npm test`
 3. `npm run test:content`
-4. `npm run build`
+4. `npm run build`、`npm run test:layout`
 5. 本機 production `/ready`、`npm run test:staging`、`npm run test:staging:stages`、`npm run test:staging:network`、`npm run test:staging:stress`
 6. `git push origin main`
 7. Render Deploy latest commit
