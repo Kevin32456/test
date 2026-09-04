@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換、回合後重玩入口與首局情境提示已通過本機 QA；功能 commit `6a330b4` 已部署，最新 staging identity 為 `0d6f51b`，並完成公開首局提示與多人 gate smoke，GitHub Actions staging health 排程已加入，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換、回合後重玩入口與首局情境提示已通過本機 QA；功能 commit `6a330b4` 已部署並完成公開首局提示與多人 gate smoke，GitHub Actions staging health 排程已加入，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
