@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換與回合後重玩入口已通過本機 QA；最新 slice 已部署到公開 Render staging 並完成公開 API／瀏覽器／重玩驗證，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換與回合後重玩入口已通過本機 QA；`9c2daab` 已部署到公開 Render staging，並完成最新 8 人壓力／重連與 3 回合長 replay 驗證，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
@@ -112,6 +112,8 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 
 ## Verification
 
+- 2026-09-04 latest public rerun：`9c2daab` 已由公開 `/ready` 確認（`startedAt 2026-09-04T02:58:12.012Z`）；公開 `test:staging:stress` 通過 8 人月影庭滿房、第 9 人拒絕、8 個出生點、pass flight、狗路徑 125／60、192 actions（153 送出／39 應用層丟失、3–3559ms）與 8 人重連清理；公開 `test:staging:long` 通過 3×15 秒、每回合 149 actions、407–414 state events／客戶，最終 0 房／0 人／0 連線。這些 loss 仍是應用層模擬，不能取代跨 ISP／實體裝置證據。
+
 - 2026-09-04 current public rerun：`34d0e9a0cc33f267b7a4856e4d16dad584c8976e` 已由公開 `/ready` 與 `EXPECTED_COMMIT=34d0e9a` 的 `npm run ops:check` 確認；stages（8 人月影庭四階段）、network（connect 680ms／join 160ms／p95 51ms／最大 808ms／斷線重連）、stress（8 人／8 spawn／pass flight／狗路徑 115／58／192 actions、34 drops）與 long replay（3×15 秒、每回合 149 actions、404–411 state events）皆單獨通過，測試後 0 房／0 人／0 連線。其後推送的文件 commit `a9e999aa844753dd037e1930d55645e647ce8e04` 已由 Render 自動部署，`EXPECTED_COMMIT=a9e999a` 的 `ops:check` 與重新執行的 stages gate（8 人月影庭完整四階段）也通過，最終仍為 0 房／0 人／0 連線。
 - `npm test`：通過（payload validation、倒數離場重置）
 - `npm run typecheck`：通過
@@ -174,7 +176,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
 - `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
 - Cloudflare 快速隧道無 SLA；關機即斷
-- 本輪遊戲內容部署基線為 GitHub `723eb9e`，包含回合後重玩入口、完整階段 gate、自製程序化音樂與聲音開關；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
+- 目前遊戲內容部署基線為 GitHub `9c2daab`，包含回合後重玩入口、完整階段 gate、自製程序化音樂、聲音開關與共享資源載入修正；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則
 - 角色描述仍是選擇提示而非不同能力；第二競技場目前是視覺／路線節奏 proof，尚未加入障礙物碰撞或特殊回合
 - 第二競技場已完成同機 8 人、公開長 replay 與應用層延遲／丟失驗證，但尚未完成跨裝置、真人高延遲、非開發者理解度與真人長時間重玩意願驗證；公開回合後 `Play again` 入口已補齊，但仍需真人確認是否願意立即重開

@@ -15,6 +15,13 @@
 - 推送文件 commit `a9e999aa844753dd037e1930d55645e647ce8e04` 後，Render 自動部署完成；新的 `/ready` `startedAt` 為 `2026-09-04T02:36:57.719Z`，`EXPECTED_COMMIT=a9e999a` 的 `npm run ops:check` 與重新執行的 8 人月影庭四階段 gate（房間 `STAGECFJUR`）均通過，測試後 0 房／0 人／0 連線。
 - 以上是同一執行環境的公開服務／自動化客戶端證據；仍不能取代真人 8 台裝置、不同 ISP、實體輸入與音效接受度測試。
 
+## 2026-09-04 latest 9c2daab multiplayer rerun
+
+- 公開 `/ready` 回報 `ready: true`、commit `9c2daabc0d7b4f59791a6d50afffc12c44ea36f6`，`startedAt` 為 `2026-09-04T02:58:12.012Z`。
+- `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:stress`：通過；月影庭 8 人滿房、第 9 人拒絕、8 個出生點、傳球飛行與狗路徑 125 個位置／60 個轉向樣本；192 個 action 排程、153 送出、39 個應用層丟失、延遲 3–3559ms，8 人持續收到狀態，重連與清理成功。
+- `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:long`：通過；2 名模擬客戶完成 3 回合 × 15 秒，每回合 149 次 action、407–414 個 state events／客戶，測試前後 0 房／0 人／0 連線。
+- 這次驗證使用目前 `9c2daab` 公開部署；壓力測試內的 jitter／loss 仍是應用層 action 模擬，不等同實體裝置或 ISP 層封包損失。
+
 ## 版本證據
 
 ## 2026-09-04 practice regression verification
