@@ -111,7 +111,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 
 ## Verification
 
-- 2026-09-04 current public rerun：`34d0e9a0cc33f267b7a4856e4d16dad584c8976e` 已由公開 `/ready` 與 `EXPECTED_COMMIT=34d0e9a` 的 `npm run ops:check` 確認；stages（8 人月影庭四階段）、network（connect 680ms／join 160ms／p95 51ms／最大 808ms／斷線重連）、stress（8 人／8 spawn／pass flight／狗路徑 115／58／192 actions、34 drops）與 long replay（3×15 秒、每回合 149 actions、404–411 state events）皆單獨通過，測試後 0 房／0 人／0 連線。
+- 2026-09-04 current public rerun：`34d0e9a0cc33f267b7a4856e4d16dad584c8976e` 已由公開 `/ready` 與 `EXPECTED_COMMIT=34d0e9a` 的 `npm run ops:check` 確認；stages（8 人月影庭四階段）、network（connect 680ms／join 160ms／p95 51ms／最大 808ms／斷線重連）、stress（8 人／8 spawn／pass flight／狗路徑 115／58／192 actions、34 drops）與 long replay（3×15 秒、每回合 149 actions、404–411 state events）皆單獨通過，測試後 0 房／0 人／0 連線。其後推送的文件 commit `a9e999aa844753dd037e1930d55645e647ce8e04` 已由 Render 自動部署，`EXPECTED_COMMIT=a9e999a` 的 `ops:check` 與重新執行的 stages gate（8 人月影庭完整四階段）也通過，最終仍為 0 房／0 人／0 連線。
 - `npm test`：通過（payload validation、倒數離場重置）
 - `npm run typecheck`：通過
 - `npm run build`：通過；初始 entry 約 54 KB，Phaser deferred chunk 約 1.48 MB
