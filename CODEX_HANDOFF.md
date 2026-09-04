@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換、回合後重玩入口與首局情境提示已通過本機 QA；`6a330b4` 已部署到公開 Render staging，並完成公開首局提示 smoke，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換、回合後重玩入口與首局情境提示已通過本機 QA；功能 commit `6a330b4` 已部署，最新 staging identity 為 `9154c78`，並完成公開首局提示與多人 gate smoke，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
@@ -155,6 +155,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `723eb9e` 公開功能部署回歸：通過；最新 bundle 含 audio toggle／6 種 music mode，8 人月影庭四階段、network 662ms connect／159ms join／p95 50ms、4 回合 replay、8 人 stress／重連／清理均通過
 - `npm run test:staging:long` 公開 Render：通過；固定 3 回合 × 15 秒，每回合 139、139、140 actions，約 406–408 個 state events／客戶，最後 0 房／0 人／0 連線
 - 本機首局情境提示 smoke：通過；8 個本機瀏覽器分頁進入首局時均觀察到 `data-tutorial-hint=move`，提示邏輯會在走位、可傳球與 Blink 行為後依序切換；這是開發者瀏覽器證據，不取代真人可理解性觀察
+- `9154c78` 公開多人回歸：通過；8 人階段 gate、真實 WebSocket network、8 人滿房／第 9 人拒絕／重連 stress，以及 8 人 × 3 回合 × 15 秒 long replay 均通過，測試後 `/ready` 為 0 房／0 人／0 連線
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作

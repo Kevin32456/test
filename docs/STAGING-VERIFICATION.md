@@ -37,6 +37,10 @@
 - `SERVICE_URL=https://test-vccb.onrender.com EXPECTED_COMMIT=6a330b4 npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 正常，測試前後 0 房／0 人／0 連線。
 - 兩個全新公開瀏覽器分頁加入同一個月影庭房間並開始首局；瀏覽器在 Phaser 對局畫面觀察到 `data-tutorial-hint=move`，畫面截圖確認底部顯示「第一步：右鍵點地走位」情境提示。
 - 這是開發者公開瀏覽器 smoke 證據，證明提示已部署並可渲染；不取代非開發者是否看懂、實體觸控／滑鼠與跨 ISP 真人測試。
+- 同一公開 deployment 的 `test:staging:stages`：通過；房間 `STAGEEMFTY` 的 8 名客戶全部收到 `teach → test → twist → mastery`，mastery 期間維持 8 人／8 連線。
+- 同一公開 deployment 的 `test:staging:network`：通過；房間 `NETTMEN9HC`，connect 670ms、join ack 161ms、127 個狀態樣本，間隔 p50 48ms／p95 51ms／最大 904ms／jitter 標準差 77ms，disconnect→reconnect→重新加入成功，最終清理為 0。
+- 同一公開 deployment 的 `test:staging:stress`：通過；房間 `FULLENJY4`，8 人滿房、第 9 人拒絕、8 個出生點、pass flight 與狗路徑 129 個位置／58 個轉向樣本；192 個 action 排程、147 送出、45 個應用層丟失，延遲 21–3618ms，重連與清理成功。
+- 同一公開 deployment 的 `test:staging:long`：通過；8 名客戶完成 3 回合 × 15 秒，每回合 149 個 action，各客戶每回合收到 417–430 個 state events，測試前後 0 房／0 人／0 連線。
 
 ## 版本證據
 
