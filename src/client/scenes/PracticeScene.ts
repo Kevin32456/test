@@ -10,7 +10,6 @@ import {
   slideCircleWall,
 } from "@shared/constants";
 import { pixelTextStyle, PIXEL_FONT_SIZES } from "@shared/fonts";
-import { characterCanvas, dogCanvas } from "../pixelArt";
 import { characterText, t } from "../i18n";
 
 export interface PracticeSceneData {
@@ -96,7 +95,6 @@ export class PracticeScene extends Phaser.Scene {
     Sfx.unlock();
     setMusicMode("practice");
     this.drawArena();
-    this.createTextures();
     this.createActors();
     this.createUi();
     this.bindInput();
@@ -128,18 +126,6 @@ export class PracticeScene extends Phaser.Scene {
       distance(this.player.x, this.player.y, this.movementStart.x, this.movementStart.y) >= 32
     ) {
       this.advanceTo("blink");
-    }
-  }
-
-  private createTextures() {
-    for (const c of CHARACTERS) {
-      const key = `char-${c.id}`;
-      if (!this.textures.exists(key)) {
-        this.textures.addCanvas(key, characterCanvas(c.id, 4));
-      }
-    }
-    if (!this.textures.exists("dog-collie")) {
-      this.textures.addCanvas("dog-collie", dogCanvas(4));
     }
   }
 

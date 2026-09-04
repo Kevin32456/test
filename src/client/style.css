@@ -639,6 +639,11 @@ body {
     width: 58px;
   }
 
+  .char-check {
+    top: 4px;
+    right: 4px;
+  }
+
   .char-name {
     font-size: 10px;
     letter-spacing: 0.08em;

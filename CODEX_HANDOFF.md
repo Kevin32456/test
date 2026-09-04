@@ -26,6 +26,7 @@
 - 倒數期間低於 2 人會取消倒數並回到大廳
 - `npm start` 改為跨平台 production 啟動；新增 server focused tests 與 GitHub Actions CI
 - Phaser 改為進入倒數／遊戲時才 dynamic import，縮小初始 entry bundle
+- 新增 `AssetScene` 作為共享角色／狗 texture 的唯一載入入口；Game／Practice scene 等資源 ready 後才切換，避免同名 texture race
 - 新增 Electron desktop wrapper；啟動時內嵌 production server，產生 Windows portable `.exe`
 - 新增 4–12 碼英數房間碼；伺服器按房間隔離 Socket.IO 狀態與玩家名單，空房會清理
 - 大廳可切換目前伺服器／遠端伺服器；遠端 URL 與房間碼會記住在本機 localStorage
@@ -133,7 +134,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm test`：通過；arena join/action 驗證、房間 arena snapshot 與既有倒數離場測試通過
 - `npm run build`：通過；production bundle 含第二競技場資料與重畫邏輯
 - `npm run test:content`：通過；8 個角色 SVG、2 個競技場、teach／test／twist／mastery 順序與繁中／英文字串完整
-- `npm run test:layout`：通過；Electron `390×844` 下繁中／英文大廳與結算文字 fixture 均無水平溢位／文字裁切，主要控制項均在視窗內；實體手機仍待測
+- `npm run test:layout`：通過；Electron `390×844` 下繁中／英文大廳與結算文字 fixture 均無水平溢位／文字裁切，主要控制項均在視窗內，並實際進入 practice scene、確認 canvas 建立且無瀏覽器 warning／error；實體手機仍待測
 - 音樂層回歸：通過；`npm run build`、`npm run test:content`、`npm test`、`npm run test:layout`，以及本機 smoke／8 人階段／network／replay／stress gate 均通過
 - `npm run test:staging:replay`：通過；本機 3 局 × 3 秒重玩、每局多人加入／playing／Moon Garden／斷線清理，最後 `rooms:0`／`players:0`／`connections:0`
 - `npm run test:staging:stress` 本機 production（新版 arena stage）：通過；8 人同房、第一位選月影庭後 8/8 收到 `moon-garden`、第 9 人拒絕、192 個延遲／丟失 action、stage 已進入 `test`、斷線與重連清理成功

@@ -39,6 +39,7 @@ import {
 
 let phaserGame: Phaser.Game | null = null;
 let phaserLoadPromise: Promise<void> | null = null;
+let phaserReadyPromise: Promise<void> | null = null;
 let selectedCharacterId = CHARACTERS[0]!.id;
 let selectedArenaId: ArenaId = DEFAULT_ARENA_ID;
 let hasJoined = false;
@@ -456,24 +457,30 @@ function renderLobby(snapshot: GameSnapshot) {
 
 function ensurePhaser(startGameScene = true): Promise<void> {
   if (phaserGame) {
-    const scene = phaserGame.scene.getScene("GameScene");
-    if (startGameScene && (!scene || !scene.sys.isActive())) {
-      phaserGame.scene.start("GameScene");
-    }
-    return Promise.resolve();
+    const ready = phaserReadyPromise ?? Promise.resolve();
+    return ready.then(() => {
+      const scene = phaserGame?.scene.getScene("GameScene");
+      if (startGameScene && phaserGame && (!scene || !scene.sys.isActive())) {
+        phaserGame.scene.start("GameScene");
+      }
+    });
   }
 
   if (phaserLoadPromise) return phaserLoadPromise;
 
   phaserLoadPromise = loadPixelFont()
     .then(async () => {
-      const [{ default: PhaserRuntime }, { GameScene }, { PracticeScene }] = await Promise.all([
+      const [{ default: PhaserRuntime }, { AssetScene }, { GameScene }, { PracticeScene }] = await Promise.all([
         import("phaser"),
+        import("./scenes/AssetScene"),
         import("./scenes/GameScene"),
         import("./scenes/PracticeScene"),
       ]);
 
-      if (phaserGame) return;
+      if (phaserGame) {
+        await (phaserReadyPromise ?? Promise.resolve());
+        return;
+      }
 
       phaserGame = new PhaserRuntime.Game({
         type: PhaserRuntime.AUTO,
@@ -486,33 +493,40 @@ function ensurePhaser(startGameScene = true): Promise<void> {
           mode: PhaserRuntime.Scale.FIT,
           autoCenter: PhaserRuntime.Scale.CENTER_BOTH,
         },
-        scene: [GameScene, PracticeScene],
+        scene: [AssetScene, GameScene, PracticeScene],
       });
       phaserGame.events.on("practice-exit", handlePracticeExit);
 
       const game = phaserGame;
-      const gameScene = game.scene.getScene("GameScene");
-      if (game.registry.get("shuai-gou.game-scene-ready") !== true && gameScene) {
-        await new Promise<void>((resolve) => {
-          let settled = false;
-          const finish = () => {
-            if (settled) return;
-            settled = true;
-            game.events.off("shuai-gou-game-scene-ready", finish);
-            resolve();
-          };
-          game.events.once("shuai-gou-game-scene-ready", finish);
-          // Keep a failed asset boot from leaving the practice button hidden
-          // forever; the scene's canvas fallback still renders if available.
-          window.setTimeout(finish, 10000);
-        });
-      }
+      phaserReadyPromise = waitForGameSceneReady(game);
+      await phaserReadyPromise;
     })
     .catch((error: unknown) => {
       phaserLoadPromise = null;
+      phaserReadyPromise = null;
       console.error("Failed to load the game client", error);
     });
   return phaserLoadPromise;
+}
+
+function waitForGameSceneReady(game: Phaser.Game): Promise<void> {
+  if (game.registry.get("shuai-gou.game-scene-ready") === true) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      game.events.off("shuai-gou-game-scene-ready", finish);
+      resolve();
+    };
+    game.events.once("shuai-gou-game-scene-ready", finish);
+    // Keep a failed asset boot from leaving the practice button hidden
+    // forever; AssetScene always installs procedural fallbacks when possible.
+    window.setTimeout(finish, 10000);
+  });
 }
 
 function handlePhase(snapshot: GameSnapshot) {

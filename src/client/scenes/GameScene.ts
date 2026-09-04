@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { Sfx } from "../audio/Sfx";
 import { setMusicMode } from "../audio/AudioEngine";
 import { expLerp, expLerpAngle } from "../interpolation";
-import { CHARACTERS, getCharacter } from "@shared/characters";
+import { getCharacter } from "@shared/characters";
 import { GAME, arenaCenter } from "@shared/constants";
 import {
   DEFAULT_ARENA_ID,
@@ -19,7 +19,6 @@ import {
   sendAction,
   subscribeState,
 } from "../network";
-import { characterCanvas, dogCanvas } from "../pixelArt";
 import { arenaText, stageText, t } from "../i18n";
 
 interface DisplayPoint {
@@ -72,28 +71,10 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  preload() {
-    for (const c of CHARACTERS) {
-      if (!this.textures.exists(`char-${c.id}`)) {
-        this.load.image(`char-${c.id}`, c.asset);
-      }
-    }
-  }
-
   create() {
     Sfx.unlock();
     setMusicMode("teach");
     this.drawArena(DEFAULT_ARENA_ID, "teach");
-
-    for (const c of CHARACTERS) {
-      const key = `char-${c.id}`;
-      if (!this.textures.exists(key)) {
-        this.textures.addCanvas(key, characterCanvas(c.id, 4));
-      }
-    }
-    if (!this.textures.exists("dog-collie")) {
-      this.textures.addCanvas("dog-collie", dogCanvas(4));
-    }
 
     this.dogSprite = this.add.container(0, 0);
     const dogImage = this.add.image(0, 0, "dog-collie");
