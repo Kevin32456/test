@@ -68,6 +68,9 @@ type TranslationKey =
   | "hudBlink"
   | "hudSpectating"
   | "hudControls"
+  | "tutorialMove"
+  | "tutorialPass"
+  | "tutorialBlink"
   | "countdownObjective"
   | "countdownStart"
   | "deathPause"
@@ -160,6 +163,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     hudBlink: "Blink <Space> · CD {cd}s",
     hudSpectating: "觀戰中",
     hudControls: "右鍵移動／傳球 · Space Blink",
+    tutorialMove: "第一步：右鍵點地走位，別讓狗貼近持球者。",
+    tutorialPass: "球燙手：右鍵點隊友傳球；球飛行時先保持移動。",
+    tutorialBlink: "還有一招：按 Space Blink，向滑鼠方向逃生。",
     countdownObjective: "目標：活到最後\n右鍵走位／持球點隊友傳球\nSpace：Blink",
     countdownStart: "開始！",
     deathPause: "{player} 出局！\n{seconds} 秒後重新傳球",
@@ -251,6 +257,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     hudBlink: "Blink <Space> · CD {cd}s",
     hudSpectating: "Spectating",
     hudControls: "Right-click move/pass · Space Blink",
+    tutorialMove: "First: right-click to move. Keep space between the dog and the ball holder.",
+    tutorialPass: "The ball is hot: right-click a teammate to pass. Keep moving while it flies.",
+    tutorialBlink: "One more escape: press Space to Blink toward the mouse.",
     countdownObjective: "Goal: survive to the end\nRight-click to move/pass\nSpace: Blink",
     countdownStart: "Go!",
     deathPause: "{player} eliminated!\nPassing again in {seconds}s",

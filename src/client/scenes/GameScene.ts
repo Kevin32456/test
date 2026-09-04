@@ -57,6 +57,12 @@ export class GameScene extends Phaser.Scene {
   private deathPauseOverlay: Phaser.GameObjects.Rectangle | null = null;
   private deathPauseBanner: Phaser.GameObjects.Text | null = null;
   private endedBanner: Phaser.GameObjects.Text | null = null;
+  private tutorialHint: Phaser.GameObjects.Text | null = null;
+  private firstRoundTutorial = false;
+  private tutorialShown = false;
+  private tutorialMoveUsed = false;
+  private tutorialPassUsed = false;
+  private tutorialBlinkUsed = false;
   private unsubState: (() => void) | null = null;
   private prevSnapshot: GameSnapshot | null = null;
   private lastMatchSeq = 0;
@@ -106,6 +112,25 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100);
 
+    // First-round guidance is contextual and temporary; it does not add a
+    // permanent fourth information block to the battle HUD.
+    this.tutorialHint = this.add
+      .text(
+        GAME.ARENA_WIDTH / 2,
+        GAME.ARENA_HEIGHT - 42,
+        "",
+        pixelTextStyle(PIXEL_FONT_SIZES.xs, {
+          color: "#fff4cf",
+          backgroundColor: "rgba(16,18,24,0.88)",
+          padding: { x: 12, y: 7 },
+          align: "center",
+          wordWrap: { width: 640, useAdvancedWrap: true },
+        }),
+      )
+      .setOrigin(0.5)
+      .setDepth(102)
+      .setVisible(false);
+
     this.countdownHint = this.add
       .text(
         GAME.ARENA_WIDTH / 2,
@@ -153,7 +178,14 @@ export class GameScene extends Phaser.Scene {
       const me = this.getMe();
       if (!me || !me.alive) return;
       const pointer = this.input.activePointer;
+      const canBlink =
+        me.blinkCooldownMs <= 0 &&
+        Phaser.Math.Distance.Between(pointer.worldX, pointer.worldY, me.x, me.y) >= 1;
       sendAction({ type: "blink", x: pointer.worldX, y: pointer.worldY });
+      if (canBlink) {
+        this.tutorialBlinkUsed = true;
+        this.updateTutorialHint(snapshot);
+      }
     });
 
     this.unsubState = subscribeState((snapshot) => {
@@ -185,6 +217,9 @@ export class GameScene extends Phaser.Scene {
     this.arenaLayer = null;
     this.arenaStageBanner?.destroy();
     this.arenaStageBanner = null;
+    this.tutorialHint?.destroy();
+    this.tutorialHint = null;
+    document.querySelector("#app")?.removeAttribute("data-tutorial-hint");
   }
 
   update(_time: number, delta: number) {
@@ -380,11 +415,15 @@ export class GameScene extends Phaser.Scene {
       const target = this.findPlayerAt(wx, wy, snapshot.players, me.id);
       if (target && target.alive && target.id !== me.id) {
         sendAction({ type: "pass", targetId: target.id });
+        this.tutorialPassUsed = true;
+        this.updateTutorialHint(snapshot);
         return;
       }
     }
 
     sendAction({ type: "move", x: wx, y: wy });
+    this.tutorialMoveUsed = true;
+    this.updateTutorialHint(snapshot);
     this.showMoveMarker(wx, wy);
   }
 
@@ -589,6 +628,11 @@ export class GameScene extends Phaser.Scene {
     if (snapshot.matchSeq !== this.lastMatchSeq) {
       this.lastMatchSeq = snapshot.matchSeq;
       this.resetRoundVisuals();
+      this.firstRoundTutorial = snapshot.matchSeq > 0 && !this.tutorialShown;
+      this.tutorialMoveUsed = false;
+      this.tutorialPassUsed = false;
+      this.tutorialBlinkUsed = false;
+      this.tutorialHint?.setVisible(false);
       this.displayBall.x = snapshot.ball.x;
       this.displayBall.y = snapshot.ball.y;
       this.displayBall.tx = snapshot.ball.x;
@@ -769,6 +813,7 @@ export class GameScene extends Phaser.Scene {
         controlHint,
       ].join("\n"),
     );
+    this.updateTutorialHint(snapshot);
 
     if (snapshot.phase === "ended") {
       if (!this.endedBanner) {
@@ -802,6 +847,52 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.prevSnapshot = snapshot;
+  }
+
+  private updateTutorialHint(snapshot: GameSnapshot) {
+    const hint = this.tutorialHint;
+    if (!hint) return;
+    if (
+      !this.firstRoundTutorial ||
+      (snapshot.phase !== "playing" && snapshot.phase !== "countdown") ||
+      snapshot.deathPauseMs > 0
+    ) {
+      hint.setVisible(false);
+      document.querySelector("#app")?.removeAttribute("data-tutorial-hint");
+      return;
+    }
+
+    const me = this.getMe();
+    let message: string | null = null;
+    if (!this.tutorialMoveUsed) {
+      message = t("tutorialMove");
+    } else if (
+      snapshot.phase === "playing" &&
+      me?.hasBall &&
+      !snapshot.ball.inFlight &&
+      !this.tutorialPassUsed
+    ) {
+      message = t("tutorialPass");
+    } else if (snapshot.phase === "playing" && !this.tutorialBlinkUsed) {
+      message = t("tutorialBlink");
+    }
+
+    if (!message) {
+      hint.setVisible(false);
+      document.querySelector("#app")?.removeAttribute("data-tutorial-hint");
+      return;
+    }
+    const hintKind = !this.tutorialMoveUsed
+      ? "move"
+      : snapshot.phase === "playing" &&
+          me?.hasBall &&
+          !snapshot.ball.inFlight &&
+          !this.tutorialPassUsed
+        ? "pass"
+        : "blink";
+    hint.setText(message).setVisible(true);
+    this.tutorialShown = true;
+    document.querySelector("#app")?.setAttribute("data-tutorial-hint", hintKind);
   }
 }
 

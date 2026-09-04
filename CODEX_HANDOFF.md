@@ -55,6 +55,7 @@
 - 新增 `src/client/i18n.ts` 與大廳語言切換，繁中／英文覆蓋大廳、角色、競技場、練習房、HUD、階段提示與結算文字
 - 新增 `scripts/generate-character-assets.ts` 與 8 個 `public/assets/characters/char-*.svg` 正式像素圖示；`npm run test:content` 驗證素材、階段資料與雙語字串
 - 新增 `src/client/audio/AudioEngine.ts`：自製程序化大廳／練習／回合階段音樂、SFX／music bus、主音量與繁中／英文聲音開關；音樂設計與真人驗收界線記錄於 `docs/AUDIO-DESIGN.md`
+- 首局加入暫時情境提示：依序引導右鍵走位、持球傳球與 Space Blink；提示只在第一次實際顯示後標記為已看過，不改多人規則，也不增加永久 HUD
 
 ## 核心規則
 
@@ -153,6 +154,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `EXPECTED_COMMIT` deployment gate：通過；以 `683d07e` 檢查公開 `/ready` 成功，故意使用 `deadbeef` 時以 exit code 1 拒絕，避免把錯誤版本誤當成已部署版本
 - `723eb9e` 公開功能部署回歸：通過；最新 bundle 含 audio toggle／6 種 music mode，8 人月影庭四階段、network 662ms connect／159ms join／p95 50ms、4 回合 replay、8 人 stress／重連／清理均通過
 - `npm run test:staging:long` 公開 Render：通過；固定 3 回合 × 15 秒，每回合 139、139、140 actions，約 406–408 個 state events／客戶，最後 0 房／0 人／0 連線
+- 本機首局情境提示 smoke：通過；8 個本機瀏覽器分頁進入首局時均觀察到 `data-tutorial-hint=move`，提示邏輯會在走位、可傳球與 Blink 行為後依序切換；這是開發者瀏覽器證據，不取代真人可理解性觀察
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作

@@ -56,6 +56,9 @@ assert.equal(ARENAS.length >= 2, true, "content slice needs two arenas");
 setLocale("zh-Hant");
 const traditionalStrings = [
   t("lobbyDesc"),
+  t("tutorialMove"),
+  t("tutorialPass"),
+  t("tutorialBlink"),
   ...CHARACTERS.flatMap((character) => [
     characterText(character.id, 0),
     characterText(character.id, 1),
@@ -73,6 +76,9 @@ setLocale("en");
 const englishStrings = [
   t("lobbyDesc"),
   t("guideMove"),
+  t("tutorialMove"),
+  t("tutorialPass"),
+  t("tutorialBlink"),
   t("resultNext"),
   t("replay"),
   ...CHARACTERS.flatMap((character) => [
