@@ -17,6 +17,12 @@
 
 ## 版本證據
 
+## 2026-09-04 practice regression verification
+
+- 修正 commit `e3219626c16779f75292f8e935cb229aea29d495` 已部署至公開 staging；`/ready` 回報 `ready: true`，啟動時間為 `2026-09-04T02:54:40.218Z`。
+- 以全新瀏覽器分頁進入單人練習房，實際完成 `練習 1/3 → 2/3 → 3/3 → 練習完成`；畫布顯示正式角色、練習搭檔、狗、球與完成後的重新練習／回大廳入口。
+- 該全新分頁從零開始的 console 沒有 warning／error；先前的 `Texture key already in use` 不再出現。
+
 - URL：<https://test-vccb.onrender.com>
 - Render 已驗證的最後一個功能性 deployment commit：`723eb9e`（`feat: add adaptive game music and audio toggle`）；包含 `290303f` 的完整階段 gate 與 `cfb930f` 的重玩入口修正。`7ddad85` 與 `7d17a20` 是部署可觀測性／交接文件更新。
 - 公開首頁最新前端 bundle：`/assets/index-ifvnWVxG.js`，已確認包含聲音開關與 6 種 music mode

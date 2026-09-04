@@ -10,7 +10,7 @@
 
 **作法：** 新增 `AssetScene` 作為唯一共享資源入口；`GameScene`／`PracticeScene` 不再自行 preload 或建立 fallback texture，`ensurePhaser()` 等待 GameScene ready marker／事件後才允許切換到 `PracticeScene`。新增 Electron smoke gate，實際進入 practice scene 並拒絕瀏覽器 warning／error。
 
-**驗證：** `npm run typecheck`、`npm test`、`npm run test:content`、`npm run build` 與 `npm run test:layout` 均通過；公開 staging 部署後仍需再跑同一入口 smoke。
+**驗證：** `npm run typecheck`、`npm test`、`npm run test:content`、`npm run build` 與 `npm run test:layout` 均通過；公開 `e3219626c16779f75292f8e935cb229aea29d495` 以全新瀏覽器分頁完成 `練習 1/3 → 2/3 → 3/3 → 練習完成`，畫布正常渲染且該分頁無 warning／error。
 
 ## 已結案：朝向與速度耦合
 
