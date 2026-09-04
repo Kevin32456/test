@@ -31,6 +31,13 @@
 - `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:long`：通過；已改為固定 8 名模擬客戶完成 3 回合 × 15 秒，每回合 148–149 次 action，每位客戶收到 414–427 個 state events，測試前後 0 房／0 人／0 連線。
 - 一般 `test:staging:replay` 另以 2 名客戶、2 回合 × 2.5 秒回歸通過；`REPLAY_CLIENTS` 可調整人數但上限為 8。所有 jitter／loss 仍是應用層 action 模擬，不等同實體裝置或 ISP 層封包損失。
 
+## 2026-09-04 latest 6a330b4 first-match guidance verification
+
+- 功能 commit `6a330b42194755977e5878c44d9ed1eb7d07078d` 已部署至公開 staging；`/ready` 回報 `ready: true`，`startedAt` 為 `2026-09-04T03:35:09.715Z`。
+- `SERVICE_URL=https://test-vccb.onrender.com EXPECTED_COMMIT=6a330b4 npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 正常，測試前後 0 房／0 人／0 連線。
+- 兩個全新公開瀏覽器分頁加入同一個月影庭房間並開始首局；瀏覽器在 Phaser 對局畫面觀察到 `data-tutorial-hint=move`，畫面截圖確認底部顯示「第一步：右鍵點地走位」情境提示。
+- 這是開發者公開瀏覽器 smoke 證據，證明提示已部署並可渲染；不取代非開發者是否看懂、實體觸控／滑鼠與跨 ISP 真人測試。
+
 ## 版本證據
 
 ## 2026-09-04 practice regression verification
