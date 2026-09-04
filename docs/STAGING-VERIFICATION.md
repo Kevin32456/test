@@ -4,6 +4,16 @@
 
 確認 GitHub `main` 的最新遊戲內容已部署到 Render staging，並用公開 URL 驗證多人服務與玩家入口，而不是只依賴本機測試。
 
+## 2026-09-04 current-state rerun
+
+- GitHub `main` HEAD：`34d0e9a`（`docs: streamline external playtest protocol`）；公開 Render `/ready` 回報完整 commit `34d0e9a0cc33f267b7a4856e4d16dad584c8976e`，`startedAt` 為 `2026-09-04T02:32:22.056Z`。
+- `EXPECTED_COMMIT=34d0e9a` 的 `npm run ops:check`：通過；`/health`、`/ready`、`/metrics` 均正常。
+- `npm run test:staging:stages`：通過；8 人月影庭房間 `STAGEC9UD9` 的 8 個客戶均收到 `teach → test → twist → mastery`，驗證當下 8 人／8 連線，測試後清理為 0。
+- `npm run test:staging:network`：通過；房間 `NETTMCB1XY`，connect 680ms、join ack 160ms、126 個狀態樣本，間隔 p95 51ms／最大 808ms／jitter 標準差 68ms，disconnect→reconnect→重新加入成功，最終 0 房／0 人／0 連線。
+- `npm run test:staging:stress`：通過；月影庭 8 人、8 個不同出生點、pass flight、狗路徑 115 個位置／58 個轉向樣本，第 9 人拒絕；192 個 action 排程、158 送出、34 個應用層丟失，延遲 33–3589ms，重連與清理成功。
+- `npm run test:staging:long`：通過；3 回合 × 15 秒，每回合 149 actions、404–411 state events／客戶，測試前後 0 房／0 人／0 連線。
+- 以上是同一執行環境的公開服務／自動化客戶端證據；仍不能取代真人 8 台裝置、不同 ISP、實體輸入與音效接受度測試。
+
 ## 版本證據
 
 - URL：<https://test-vccb.onrender.com>
