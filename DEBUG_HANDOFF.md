@@ -2,6 +2,16 @@
 
 已結案的物理問題留作紀錄；目前沒有卡住的重複缺陷迴圈。
 
+## 已結案：單人練習房初始空白／重複貼圖（2026-09-04）
+
+**現象：** 公開 staging 從大廳進入單人練習房時，畫面可能停在空白 Phaser 畫布；console 出現多筆 `Texture key already in use: char-*`。
+
+**根因：** `GameScene` 與 `PracticeScene` 同時在 Phaser 啟動時對全域 Texture Manager preload 相同的角色 key；練習按鈕又可能在初始 scene 的資源載入完成前切換 scene。
+
+**作法：** 由 `GameScene` 單獨負責角色資源 preload；`ensurePhaser()` 等待 GameScene 設定 ready marker／事件後才允許切換到 `PracticeScene`。新增 Electron smoke gate，實際進入 practice scene 並拒絕瀏覽器 warning／error。
+
+**驗證：** `npm run typecheck`、`npm test`、`npm run test:content`、`npm run build` 與 `npm run test:layout` 均通過；公開 staging 部署後仍需再跑同一入口 smoke。
+
 ## 已結案：朝向與速度耦合
 
 **現象：** 掠過後狗衝很遠，狗頭永遠朝速度方向。

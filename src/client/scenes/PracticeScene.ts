@@ -68,14 +68,6 @@ export class PracticeScene extends Phaser.Scene {
     super("PracticeScene");
   }
 
-  preload() {
-    for (const c of CHARACTERS) {
-      if (!this.textures.exists(`char-${c.id}`)) {
-        this.load.image(`char-${c.id}`, c.asset);
-      }
-    }
-  }
-
   create(data: PracticeSceneData = {}) {
     const selected = getCharacter(data.characterId);
     this.characterId = selected?.id ?? CHARACTERS[0]!.id;
@@ -109,6 +101,7 @@ export class PracticeScene extends Phaser.Scene {
     this.createUi();
     this.bindInput();
     this.renderProgress();
+    document.querySelector("#app")?.setAttribute("data-active-scene", "practice");
   }
 
   shutdown() {

@@ -489,6 +489,24 @@ function ensurePhaser(startGameScene = true): Promise<void> {
         scene: [GameScene, PracticeScene],
       });
       phaserGame.events.on("practice-exit", handlePracticeExit);
+
+      const game = phaserGame;
+      const gameScene = game.scene.getScene("GameScene");
+      if (game.registry.get("shuai-gou.game-scene-ready") !== true && gameScene) {
+        await new Promise<void>((resolve) => {
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            game.events.off("shuai-gou-game-scene-ready", finish);
+            resolve();
+          };
+          game.events.once("shuai-gou-game-scene-ready", finish);
+          // Keep a failed asset boot from leaving the practice button hidden
+          // forever; the scene's canvas fallback still renders if available.
+          window.setTimeout(finish, 10000);
+        });
+      }
     })
     .catch((error: unknown) => {
       phaserLoadPromise = null;

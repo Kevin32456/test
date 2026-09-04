@@ -122,6 +122,31 @@ async function hideResultFixture(window) {
   await window.webContents.executeJavaScript("document.querySelector('#result-panel').hidden = true");
 }
 
+async function exercisePractice(window) {
+  await window.webContents.executeJavaScript(`(() => {
+    const button = document.querySelector('#practice-btn');
+    if (!button || button.disabled) throw new Error('practice button is unavailable');
+    button.click();
+  })()`);
+
+  const deadline = Date.now() + 10000;
+  let report = null;
+  while (Date.now() < deadline) {
+    report = await window.webContents.executeJavaScript(`(() => {
+      const canvas = document.querySelector('canvas');
+      return {
+        activeScene: document.querySelector('#app')?.getAttribute('data-active-scene') ?? null,
+        canvas: Boolean(canvas),
+        canvasWidth: canvas?.width ?? 0,
+        canvasHeight: canvas?.height ?? 0,
+      };
+    })()`);
+    if (report.activeScene === 'practice') return report;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`practice scene did not become ready: ${JSON.stringify(report)}`);
+}
+
 async function exerciseAudioToggle(window) {
   return window.webContents.executeJavaScript(`(() => {
     const toggle = document.querySelector('#audio-toggle');
@@ -158,6 +183,10 @@ async function main() {
       show: false,
       webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
     });
+    const consoleMessages = [];
+    window.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+      if (level >= 2) consoleMessages.push({ level, message, line, sourceId });
+    });
     await window.loadURL(`http://127.0.0.1:${port}/`);
     await window.webContents.executeJavaScript("document.fonts?.ready");
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -193,7 +222,18 @@ async function main() {
       reports.push({ lobby: report, result: resultReport });
     }
 
-    process.stdout.write(`${JSON.stringify({ ok: true, viewport: "390x844", reports }, null, 2)}\n`);
+    const practiceReport = await exercisePractice(window);
+    assert.equal(practiceReport.activeScene, 'practice');
+    assert.equal(practiceReport.canvas, true, 'practice canvas is missing');
+    assert.ok(practiceReport.canvasWidth > 0, 'practice canvas has zero width');
+    assert.ok(practiceReport.canvasHeight > 0, 'practice canvas has zero height');
+    assert.equal(
+      consoleMessages.length,
+      0,
+      `browser console warnings/errors: ${JSON.stringify(consoleMessages)}`,
+    );
+
+    process.stdout.write(`${JSON.stringify({ ok: true, viewport: "390x844", reports, practice: practiceReport }, null, 2)}\n`);
     await new Promise((resolve) => setTimeout(resolve, 100));
   } finally {
     if (window && !window.isDestroyed()) window.destroy();

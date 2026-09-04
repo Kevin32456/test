@@ -181,6 +181,13 @@ export class GameScene extends Phaser.Scene {
 
     const initial = getLatestSnapshot();
     if (initial) this.applySnapshot(initial);
+
+    // GameScene is the single owner of the shared character asset preload.
+    // PracticeScene waits for this marker before it can be started, which
+    // prevents both scenes from queueing the same texture keys at boot.
+    this.registry.set("shuai-gou.game-scene-ready", true);
+    document.querySelector("#app")?.setAttribute("data-active-scene", "game");
+    this.game.events.emit("shuai-gou-game-scene-ready");
   }
 
   shutdown() {
