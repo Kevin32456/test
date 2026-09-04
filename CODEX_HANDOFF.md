@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換、回合後重玩入口與首局情境提示已通過本機 QA；功能 commit `6a330b4` 已部署，最新 staging identity 為 `9154c78`，並完成公開首局提示與多人 gate smoke，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換、回合後重玩入口與首局情境提示已通過本機 QA；功能 commit `6a330b4` 已部署，最新 staging identity 為 `bc4b4e9`，並完成公開首局提示與多人 gate smoke，GitHub Actions staging health 排程已加入，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
@@ -56,6 +56,7 @@
 - 新增 `scripts/generate-character-assets.ts` 與 8 個 `public/assets/characters/char-*.svg` 正式像素圖示；`npm run test:content` 驗證素材、階段資料與雙語字串
 - 新增 `src/client/audio/AudioEngine.ts`：自製程序化大廳／練習／回合階段音樂、SFX／music bus、主音量與繁中／英文聲音開關；音樂設計與真人驗收界線記錄於 `docs/AUDIO-DESIGN.md`
 - 首局加入暫時情境提示：依序引導右鍵走位、持球傳球與 Space Blink；提示只在第一次實際顯示後標記為已看過，不改多人規則，也不增加永久 HUD
+- 新增 `.github/workflows/staging-health.yml`：每 30 分鐘檢查 staging `/health`、`/ready`、`/metrics`，並可手動帶入未來正式 URL／預期 commit；不建立付費服務或外部帳號
 
 ## 核心規則
 
@@ -156,6 +157,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run test:staging:long` 公開 Render：通過；固定 3 回合 × 15 秒，每回合 139、139、140 actions，約 406–408 個 state events／客戶，最後 0 房／0 人／0 連線
 - 本機首局情境提示 smoke：通過；8 個本機瀏覽器分頁進入首局時均觀察到 `data-tutorial-hint=move`，提示邏輯會在走位、可傳球與 Blink 行為後依序切換；這是開發者瀏覽器證據，不取代真人可理解性觀察
 - `9154c78` 公開多人回歸：通過；8 人階段 gate、真實 WebSocket network、8 人滿房／第 9 人拒絕／重連 stress，以及 8 人 × 3 回合 × 15 秒 long replay 均通過，測試後 `/ready` 為 0 房／0 人／0 連線
+- GitHub Actions staging health workflow：設定完成；本機以同一 `npm run ops:check` 驗證 staging `/health`、`/ready`、`/metrics` 與 commit identity，排程／手動 workflow 仍需 GitHub 執行紀錄持續觀察
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
@@ -177,7 +179,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run test:staging:stress` 的延遲／抖動／丟失是測試客戶端 action 模擬，不等同於作業系統或路由器層的封包損失
 - Electron 390×844 layout gate 已通過，但仍不能取代實體手機字體／輸入測試；8 分頁瀏覽器 QA 也仍是同一台機器／網路，尚未取代 8 台不同裝置／網路的真人對局證據
 - Render free plan 可能休眠；Socket.IO 遠端對局需要確認實際方案與單實例限制
-- `/metrics` 與 JSON logs 已提供基本監控資料，但尚未接入外部告警／log drain；正式服務仍需配置常駐方案與告警目的地
+- `/metrics` 與 JSON logs 已提供基本監控資料，並已加入 GitHub Actions staging 排程檢查；正式服務仍需配置常駐方案、外部 HTTP 告警／log drain 與 metrics collector
 - Cloudflare 快速隧道無 SLA；關機即斷
 - 目前遊戲內容部署基線為 GitHub `9c2daab`，包含回合後重玩入口、完整階段 gate、自製程序化音樂、聲音開關與共享資源載入修正；Render staging 已公開驗證，後續部署需保留 Render previous deploy／`git revert` 回滾路徑
 - 練習房目前是非致命的三步驟教學 proof，尚未以非開發者玩家觀察完成率；正式對局仍是單一標準回合，第二競技場目前不改規則

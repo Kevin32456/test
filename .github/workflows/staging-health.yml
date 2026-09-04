@@ -1,0 +1,47 @@
+name: Staging health
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      service_url:
+        description: "Service URL to check"
+        required: false
+        default: "https://test-vccb.onrender.com"
+        type: string
+      expected_commit:
+        description: "Optional expected /ready commit prefix"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-health
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SERVICE_URL: ${{ inputs.service_url || 'https://test-vccb.onrender.com' }}
+      EXPECTED_COMMIT: ${{ inputs.expected_commit || '' }}
+      SERVICE_TIMEOUT_MS: "10000"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check service health and metrics
+        run: npm run ops:check

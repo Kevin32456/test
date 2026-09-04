@@ -22,6 +22,7 @@
 - `GET /metrics`：Prometheus text format 的 build identity、process、房間、連線、加入拒絕、斷線與 invalid action counters。
 - stdout：每行一筆 JSON log，包含 `server_started`、`join_accepted`、`join_rejected`、`action_rejected`、`connection_closed`、`process_error`、版本與 commit identity。
 - `npm run ops:check`：一次檢查 `/health`、`/ready` 與 `/metrics`；設定 `EXPECTED_COMMIT` 時，還會要求 `/ready.commit` 以指定完整／短 commit 開頭；GitHub Actions 的 `Service health gate` 可手動帶入 URL 與預期 commit 重跑同一檢查。
+- `.github/workflows/staging-health.yml`：GitHub Actions 每 30 分鐘執行 `npm run ops:check`；也可手動帶入其他服務 URL／預期 commit，讓同一檢查在正式服務建立後重用。
 
 最低監控告警：
 
@@ -38,6 +39,7 @@
 - 以平台 log drain 或集中式 log viewer 保留 stdout JSON；搜尋 `process_error`、`join_rejected`、`action_rejected`、`connection_closed`。
 - 以 Prometheus-compatible collector 抓取 `/metrics`；至少保存 active connections、rooms、players、joins、disconnects 與 invalid actions 的時間序列。
 - 告警目的地、log drain 與正式 URL 需在 Render／監控服務帳號中配置；本 repo 只提供可被監控的 endpoint 與結構化訊號，不假裝已替使用者建立外部帳號。
+- GitHub Actions 排程目前只監測 staging 並提供失敗紀錄；它不是正式服務的 SLA，也不取代正式 HTTP monitor、metrics collector 或 log drain。
 
 部署後先記錄：`SERVICE_URL=https://test-vccb.onrender.com EXPECTED_COMMIT=<deploy-commit> npm run ops:check`，再執行 `npm run test:staging`、`npm run test:staging:stress`、`npm run test:staging:stages`、`npm run test:staging:network`、`npm run test:staging:replay` 與 `npm run test:staging:long`。長 replay 固定為 3 回合 × 15 秒，用來觀察連續重玩與清理。
 
