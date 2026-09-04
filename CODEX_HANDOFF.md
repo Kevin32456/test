@@ -7,7 +7,7 @@
 ## Current Phase
 
 - Phase: Steam 上架前內容完成（alpha／vertical slice）
-- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換與回合後重玩入口已通過本機 QA；`9c2daab` 已部署到公開 Render staging，並完成最新 8 人壓力／重連與 3 回合長 replay 驗證，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
+- Status: 核心回合、Render staging、新手指南、單人練習房、第二競技場、teach／test／twist／mastery、結算資訊、正式角色 SVG、繁中／英文介面切換與回合後重玩入口已通過本機 QA；`061d84b` 已部署到公開 Render staging，並完成最新 8 人壓力／重連與 8 人 × 3 回合長 replay 驗證，仍待非開發者與跨裝置真人網路驗證，Steamworks 暫停
 
 ## 玩家幻想
 
@@ -112,7 +112,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 
 ## Verification
 
-- 2026-09-04 latest public rerun：`9c2daab` 已由公開 `/ready` 確認（`startedAt 2026-09-04T02:58:12.012Z`）；公開 `test:staging:stress` 通過 8 人月影庭滿房、第 9 人拒絕、8 個出生點、pass flight、狗路徑 125／60、192 actions（153 送出／39 應用層丟失、3–3559ms）與 8 人重連清理；公開 `test:staging:long` 通過 3×15 秒、每回合 149 actions、407–414 state events／客戶，最終 0 房／0 人／0 連線。這些 loss 仍是應用層模擬，不能取代跨 ISP／實體裝置證據。
+- 2026-09-04 latest public rerun：`061d84b` 已由公開 `/ready` 確認（`startedAt 2026-09-04T03:11:15.105Z`）；公開 `test:staging:stages` 通過 8 人月影庭完整 `teach → test → twist → mastery`，network gate 通過（connect 692ms／join 161ms／p95 51ms／最大 841ms／斷線重連）；公開 `test:staging:stress` 通過 8 人滿房、第 9 人拒絕、8 個出生點、pass flight、狗路徑 114／48、192 actions（163 送出／29 應用層丟失、16–3576ms）與 8 人重連清理；公開 `test:staging:long` 現已固定 8 人，通過 3×15 秒、每回合 148–149 actions、每客戶 414–427 state events，最終 0 房／0 人／0 連線。這些 loss 仍是應用層模擬，不能取代跨 ISP／實體裝置證據。
 
 - 2026-09-04 current public rerun：`34d0e9a0cc33f267b7a4856e4d16dad584c8976e` 已由公開 `/ready` 與 `EXPECTED_COMMIT=34d0e9a` 的 `npm run ops:check` 確認；stages（8 人月影庭四階段）、network（connect 680ms／join 160ms／p95 51ms／最大 808ms／斷線重連）、stress（8 人／8 spawn／pass flight／狗路徑 115／58／192 actions、34 drops）與 long replay（3×15 秒、每回合 149 actions、404–411 state events）皆單獨通過，測試後 0 房／0 人／0 連線。其後推送的文件 commit `a9e999aa844753dd037e1930d55645e647ce8e04` 已由 Render 自動部署，`EXPECTED_COMMIT=a9e999a` 的 `ops:check` 與重新執行的 stages gate（8 人月影庭完整四階段）也通過，最終仍為 0 房／0 人／0 連線。
 - `npm test`：通過（payload validation、倒數離場重置）

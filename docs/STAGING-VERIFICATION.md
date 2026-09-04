@@ -22,6 +22,15 @@
 - `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:long`：通過；2 名模擬客戶完成 3 回合 × 15 秒，每回合 149 次 action、407–414 個 state events／客戶，測試前後 0 房／0 人／0 連線。
 - 這次驗證使用目前 `9c2daab` 公開部署；壓力測試內的 jitter／loss 仍是應用層 action 模擬，不等同實體裝置或 ISP 層封包損失。
 
+## 2026-09-04 latest 061d84b replay harness verification
+
+- 測試工具 commit `061d84b264523ed4546b4b27e885bf799d814767` 已部署；公開 `/ready` 回報 `ready: true`，`startedAt` 為 `2026-09-04T03:11:15.105Z`。
+- `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:stages`：通過；8 名客戶全部收到 `teach → test → twist → mastery`，mastery 期間維持 8 人／8 連線。
+- `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:network`：通過；connect 692ms、join ack 161ms、125 個狀態樣本，狀態間隔 p95 51ms／最大 841ms／jitter 標準差 72ms，disconnect→reconnect→重新加入成功，最終 0 房／0 人／0 連線。
+- `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:stress`：通過；8 人月影庭、第 9 人拒絕、8 個出生點、pass flight、狗路徑 114 個位置／48 個轉向樣本；192 個 action 排程、163 送出、29 個應用層丟失、延遲 16–3576ms，重連與清理成功。
+- `STAGING_URL=https://test-vccb.onrender.com npm run test:staging:long`：通過；已改為固定 8 名模擬客戶完成 3 回合 × 15 秒，每回合 148–149 次 action，每位客戶收到 414–427 個 state events，測試前後 0 房／0 人／0 連線。
+- 一般 `test:staging:replay` 另以 2 名客戶、2 回合 × 2.5 秒回歸通過；`REPLAY_CLIENTS` 可調整人數但上限為 8。所有 jitter／loss 仍是應用層 action 模擬，不等同實體裝置或 ISP 層封包損失。
+
 ## 版本證據
 
 ## 2026-09-04 practice regression verification
