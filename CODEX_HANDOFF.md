@@ -157,7 +157,7 @@ $env:HOST='0.0.0.0'; $env:PORT='4320'; npm start
 - `npm run test:staging:long` 公開 Render：通過；固定 3 回合 × 15 秒，每回合 139、139、140 actions，約 406–408 個 state events／客戶，最後 0 房／0 人／0 連線
 - 本機首局情境提示 smoke：通過；8 個本機瀏覽器分頁進入首局時均觀察到 `data-tutorial-hint=move`，提示邏輯會在走位、可傳球與 Blink 行為後依序切換；這是開發者瀏覽器證據，不取代真人可理解性觀察
 - `9154c78` 公開多人回歸：通過；8 人階段 gate、真實 WebSocket network、8 人滿房／第 9 人拒絕／重連 stress，以及 8 人 × 3 回合 × 15 秒 long replay 均通過，測試後 `/ready` 為 0 房／0 人／0 連線
-- GitHub Actions staging health workflow：原 10 秒 timeout 在 Render Free 喚醒時造成實際排程失敗；已改為 65 秒 request timeout 並在失敗後重試一次，待下一次 GitHub workflow 驗證
+- GitHub Actions staging health workflow：原 10 秒 timeout 在 Render Free 喚醒時造成實際排程失敗；已改為 65 秒 request timeout 並在失敗後重試一次；手動 run [#24](https://github.com/Kevin32456/test/actions/runs/34110772936) 以 `7cd2376` 通過，job `health` 與 staging `/ready` commit 均已驗證
 - staging JSON log：通過；可觀察 `server_started`、`join_accepted`、`connection_closed` 與 disconnect reason
 - Windows `npm start`、`/health`、production 首頁：通過
 - malformed join/action smoke：回傳 `invalid_payload`，server 維持運作
