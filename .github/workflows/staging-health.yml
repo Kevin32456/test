@@ -29,7 +29,8 @@ jobs:
     env:
       SERVICE_URL: ${{ inputs.service_url || 'https://test-vccb.onrender.com' }}
       EXPECTED_COMMIT: ${{ inputs.expected_commit || '' }}
-      SERVICE_TIMEOUT_MS: "10000"
+      # Render Free can take 50+ seconds to wake after inactivity.
+      SERVICE_TIMEOUT_MS: "65000"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,4 +45,15 @@ jobs:
         run: npm ci
 
       - name: Check service health and metrics
-        run: npm run ops:check
+        run: |
+          for attempt in 1 2; do
+            echo "Staging health attempt ${attempt}/2"
+            if npm run ops:check; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 2 ]; then
+              echo "Health check failed; waiting 10 seconds before retrying."
+              sleep 10
+            fi
+          done
+          exit 1

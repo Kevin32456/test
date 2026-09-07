@@ -22,7 +22,7 @@
 - `GET /metrics`：Prometheus text format 的 build identity、process、房間、連線、加入拒絕、斷線與 invalid action counters。
 - stdout：每行一筆 JSON log，包含 `server_started`、`join_accepted`、`join_rejected`、`action_rejected`、`connection_closed`、`process_error`、版本與 commit identity。
 - `npm run ops:check`：一次檢查 `/health`、`/ready` 與 `/metrics`；設定 `EXPECTED_COMMIT` 時，還會要求 `/ready.commit` 以指定完整／短 commit 開頭；GitHub Actions 的 `Service health gate` 可手動帶入 URL 與預期 commit 重跑同一檢查。
-- `.github/workflows/staging-health.yml`：GitHub Actions 每 30 分鐘執行 `npm run ops:check`；也可手動帶入其他服務 URL／預期 commit，讓同一檢查在正式服務建立後重用。
+- `.github/workflows/staging-health.yml`：GitHub Actions 每 30 分鐘執行 `npm run ops:check`；因 Render Free 休眠喚醒可能超過 50 秒，workflow 使用 65 秒 request timeout 並在失敗後重試一次；也可手動帶入其他服務 URL／預期 commit，讓同一檢查在正式服務建立後重用。
 
 最低監控告警：
 
